@@ -16,12 +16,33 @@ launchBiip = () => {
 	
 	// Create oscillator source node
 	const osc = new OscillatorNode(F.audioContext, {
-		frequency: 440,
-		type: 'sawtooth' // "sine", "square", "sawtooth", "triangle"
+		frequency: 280,
+		type: 'triangle' // "sine", "square", "sawtooth", "triangle"
 	})
 	
-	// Link oscillator to audio context destination
+	// Link oscillator to audio context destination (for hearing)
 	osc.connect(F.audioContext.destination)
+	
+	// Create audio analyzer
+	const analyser = new AnalyserNode(F.audioContext) // Created with FFT size of 2048 (2^11)
+	
+	// Don't forget to connect it with analyser!
+	osc.connect(analyser)
+	
+	const bufferLength = analyser.frequencyBinCount // 1024
+	const dataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
+	
+	// Start oscillator for one second!
+	osc.start()
+	osc.stop(1)
+	
+	let interv = setInterval(() => {
+		analyser.getByteTimeDomainData(dataArray)
+		// dataArray now holds the buffer data
+		// buffer holder a given limited time interval of amplitude values
+	}, 300)
+	setTimeout(() => { clearInterval(interv) }, 1000)
+	
 }
 askForMike = () => {
 	if (navigator.mediaDevices) {
