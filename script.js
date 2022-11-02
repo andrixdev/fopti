@@ -8,7 +8,7 @@
 // Global variables in F namespace
 const F = {
 	audioContext: undefined
-}
+}, log = console.log
 
 launchBiip = () => {
 	// Create main audio context with 48kHz sample rate
@@ -16,8 +16,8 @@ launchBiip = () => {
 	
 	// Create oscillator source node
 	const osc = new OscillatorNode(F.audioContext, {
-		frequency: 280,
-		type: 'triangle' // "sine", "square", "sawtooth", "triangle"
+		frequency: 2000,
+		type: 'sine' // "sine", "square", "sawtooth", "triangle"
 	})
 	
 	// Link oscillator to audio context destination (for hearing)
@@ -30,16 +30,20 @@ launchBiip = () => {
 	osc.connect(analyser)
 	
 	const bufferLength = analyser.frequencyBinCount // 1024
-	const dataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
+	const timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
 	
+	const frequDataArray = new Uint8Array(bufferLength)
 	// Start oscillator for one second!
 	osc.start()
 	osc.stop(1)
 	
 	let interv = setInterval(() => {
-		analyser.getByteTimeDomainData(dataArray)
+		analyser.getByteTimeDomainData(timuDataArray)
 		// dataArray now holds the buffer data
-		// buffer holder a given limited time interval of amplitude values
+		// buffer holds a given limited time interval of amplitude values
+		analyser.getByteFrequencyData(frequDataArray)
+		
+		log(timuDataArray)
 	}, 300)
 	setTimeout(() => { clearInterval(interv) }, 1000)
 	
