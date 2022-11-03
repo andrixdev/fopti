@@ -7,7 +7,8 @@
 
 // Global variables in F namespace
 const F = {
-	audioContext: undefined
+	audioContext: undefined,
+	timuDataArray: []
 }
 const log = console.log
 const dom = {
@@ -17,14 +18,61 @@ const dom = {
 		fft: document.getElementById('fft-template')
 	}
 }
+let initOscilloscopeView = () => {
+	
+	document.getElementsByClassName('mike-start')[0].addEventListener('click', askForMike)
 
+	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
+	
+	// Canvas setup
+	let ctx = document.getElementById('oscilloscope-canvas').getContext('2d')
+	let container = document.getElementById('oscilloscope-container'),
+		width = container.clientWidth,
+		height = 300
+		
+	ctx.canvas.width = width
+	ctx.canvas.height = height
+	
+	// Canvas background
+	ctx.lineWidth = 1
+	ctx.fillStyle = 'hsla(200, 30%, 5%, 1)'
+	ctx.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx.fillRect(0, 0, width, height)
+	
+	// Canvas time loop
+	let frame = 0
+	let loop = () => {
+		frame++
+		//log(i)
+		ctx.clearRect(0, 0, width, height)
+		ctx.beginPath()
+		
+		ctx.moveTo(0, F.timuDataArray[0])
+		
+		let step = width / F.timuDataArray.length
+		for (let i = 0; i < F.timuDataArray.length; i++) {
+			ctx.lineTo(i * step, F.timuDataArray[i])
+		}
+		
+		ctx.stroke()
+		
+		window.requestAnimationFrame(loop)
+	}
+	window.requestAnimationFrame(loop)
+	
+}
+let initFFTView = () => {
+	document.getElementById('fft-container').addEventListener('click', () => {
+		log('yes fft')
+	})
+}
 launchBiip = () => {
 	// Create main audio context with 48kHz sample rate
 	F.audioContext = new AudioContext({ sampleRate: 48000 })
 	
 	// Create oscillator source node
 	const osc = new OscillatorNode(F.audioContext, {
-		frequency: 2000,
+		frequency: 440,
 		type: 'sine' // "sine", "square", "sawtooth", "triangle"
 	})
 	
@@ -38,7 +86,7 @@ launchBiip = () => {
 	osc.connect(analyser)
 	
 	const bufferLength = analyser.frequencyBinCount // 1024
-	const timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
+	F.timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
 	
 	const frequDataArray = new Uint8Array(bufferLength)
 	// Start oscillator for one second!
@@ -46,13 +94,11 @@ launchBiip = () => {
 	osc.stop(1)
 	
 	let interv = setInterval(() => {
-		analyser.getByteTimeDomainData(timuDataArray)
+		analyser.getByteTimeDomainData(F.timuDataArray)
 		// dataArray now holds the buffer data
 		// buffer holds a given limited time interval of amplitude values
 		analyser.getByteFrequencyData(frequDataArray)
-		
-		log(timuDataArray)
-	}, 300)
+	}, 30)
 	setTimeout(() => { clearInterval(interv) }, 1000)
 	
 }
@@ -80,22 +126,13 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	document.getElementById('oscilloscope').addEventListener('click', () => {
 		dom.main.innerHTML = dom.templates.oscilloscope.innerHTML
 		
-		document.getElementById('oscilloscope-container').addEventListener('click', () => {
-			log('yes osci')
-		})
-		
-		document.querySelector("button.mike-start").addEventListener('click', askForMike)
-	
-		document.querySelector("button.oscillator-start").addEventListener('click', launchBiip)
-		
+		initOscilloscopeView()
 	})
 	
 	document.getElementById('fft').addEventListener('click', () => {
 		dom.main.innerHTML = dom.templates.fft.innerHTML
 		
-		document.getElementById('fft-container').addEventListener('click', () => {
-			log('yes fft')
-		})
+		initFFTView()
 	})
 	
 })

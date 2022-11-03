@@ -33,13 +33,19 @@ main {
 	background: hsla(0, 0%, 0%, 0.95);
 }
 nav {
-	padding: 1em;
 	border-right: solid white 1px;
 }
 nav p {
 	text-transform: uppercase;
 	font-size: 1.4rem;
 	text-align: center;
+	cursor: pointer;
+	padding: 1em;
+	margin: 0;
+}
+nav p:hover {
+	background: white;
+	color: black;
 }
 main {
 	padding: 1em;
