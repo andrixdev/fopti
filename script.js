@@ -8,7 +8,15 @@
 // Global variables in F namespace
 const F = {
 	audioContext: undefined
-}, log = console.log
+}
+const log = console.log
+const dom = {
+	main: document.getElementsByTagName('main')[0],
+	templates: {
+		oscilloscope: document.getElementById('oscilloscope-template'),
+		fft: document.getElementById('fft-template')
+	}
+}
 
 launchBiip = () => {
 	// Create main audio context with 48kHz sample rate
@@ -68,8 +76,26 @@ askForMike = () => {
 
 document.addEventListener("DOMContentLoaded", (ev) => {
 	
-	document.querySelector("button.mike-start").addEventListener('click', askForMike)
+	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
+	document.getElementById('oscilloscope').addEventListener('click', () => {
+		dom.main.innerHTML = dom.templates.oscilloscope.innerHTML
+		
+		document.getElementById('oscilloscope-container').addEventListener('click', () => {
+			log('yes osci')
+		})
+		
+		document.querySelector("button.mike-start").addEventListener('click', askForMike)
 	
-	document.querySelector("button.oscillator-start").addEventListener('click', launchBiip)
+		document.querySelector("button.oscillator-start").addEventListener('click', launchBiip)
+		
+	})
+	
+	document.getElementById('fft').addEventListener('click', () => {
+		dom.main.innerHTML = dom.templates.fft.innerHTML
+		
+		document.getElementById('fft-container').addEventListener('click', () => {
+			log('yes fft')
+		})
+	})
 	
 })

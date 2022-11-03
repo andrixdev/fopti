@@ -14,15 +14,25 @@
 		</nav>
 		
 		<main>
-			<p>This is the start of FOPTI web interface</p>
-			
-			<button class="mike-start">Mike start</button>
-			<button class="oscillator-start">Oscillator start</button>
+			<p>Main</p>
 		</main>
 		
 		<div id="loading-overlay">
 			<p>FOPTI</p>
 		</div>
+		
+		<template id="oscilloscope-template">
+			<div id="oscilloscope-container">
+				<button class="mike-start">Mike start</button>
+				<button class="oscillator-start">Oscillator start</button>
+			</div>
+		</template>
+		
+		<template id="fft-template">
+			<div id="fft-container">
+				<p>FFT content</p>
+			</div>
+		</template>
 		
 		<script src="script.js"></script>
 	</body>
