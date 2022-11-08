@@ -8,7 +8,8 @@
 // Global variables in F namespace
 const F = {
 	audioContext: undefined,
-	timuDataArray: []
+	timuDataArray: [],
+	frequDataArray: []
 }
 const log = console.log
 const dom = {
@@ -20,51 +21,79 @@ const dom = {
 }
 let initOscilloscopeView = () => {
 	
-	document.getElementsByClassName('mike-start')[0].addEventListener('click', askForMike)
-
-	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
-	
 	// Canvas setup
-	let ctx = document.getElementById('oscilloscope-canvas').getContext('2d')
-	let container = document.getElementById('oscilloscope-container'),
-		width = container.clientWidth,
+	let ctx1 = document.getElementById('oscilloscope-canvas').getContext('2d')
+	let container1 = document.getElementById('oscilloscope-container'),
+		width = container1.clientWidth,
 		height = 300
 		
-	ctx.canvas.width = width
-	ctx.canvas.height = height
+	ctx1.canvas.width = width
+	ctx1.canvas.height = height
 	
 	// Canvas background
-	ctx.lineWidth = 1
-	ctx.fillStyle = 'hsla(200, 30%, 5%, 1)'
-	ctx.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
-	ctx.fillRect(0, 0, width, height)
+	ctx1.lineWidth = 1
+	ctx1.fillStyle = 'hsla(200, 30%, 5%, 1)'
+	ctx1.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx1.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
 	let frame = 0
-	let loop = () => {
+	let loop1 = () => {
 		frame++
 		//log(i)
-		ctx.clearRect(0, 0, width, height)
-		ctx.beginPath()
+		ctx1.clearRect(0, 0, width, height)
+		ctx1.beginPath()
 		
-		ctx.moveTo(0, F.timuDataArray[0])
+		ctx1.moveTo(0, F.timuDataArray[0])
 		
 		let step = width / F.timuDataArray.length
 		for (let i = 0; i < F.timuDataArray.length; i++) {
-			ctx.lineTo(i * step, F.timuDataArray[i])
+			ctx1.lineTo(i * step, F.timuDataArray[i])
 		}
 		
-		ctx.stroke()
+		ctx1.stroke()
 		
-		window.requestAnimationFrame(loop)
+		window.requestAnimationFrame(loop1)
 	}
-	window.requestAnimationFrame(loop)
+	window.requestAnimationFrame(loop1)
 	
 }
 let initFFTView = () => {
-	document.getElementById('fft-container').addEventListener('click', () => {
-		log('yes fft')
-	})
+	// Canvas setup
+	let ctx2 = document.getElementById('fft-canvas').getContext('2d')
+	let container2 = document.getElementById('fft-container'),
+		width = container2.clientWidth,
+		height = 300
+		
+	ctx2.canvas.width = width
+	ctx2.canvas.height = height
+	
+	// Canvas background
+	ctx2.lineWidth = 1
+	ctx2.fillStyle = 'hsla(200, 30%, 5%, 1)'
+	ctx2.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx2.fillRect(0, 0, width, height)
+	
+	// Canvas time loop
+	let frame = 0
+	let loop2 = () => {
+		frame++
+		//log(i)
+		ctx2.clearRect(0, 0, width, height)
+		ctx2.beginPath()
+		
+		ctx2.moveTo(0, F.frequDataArray[0])
+		
+		let step = width / F.frequDataArray.length
+		for (let i = 0; i < F.frequDataArray.length; i++) {
+			ctx2.lineTo(i * step, F.frequDataArray[i])
+		}
+		
+		ctx2.stroke()
+		
+		window.requestAnimationFrame(loop2)
+	}
+	window.requestAnimationFrame(loop2)
 }
 launchBiip = () => {
 	// Create main audio context with 48kHz sample rate
@@ -86,9 +115,11 @@ launchBiip = () => {
 	osc.connect(analyser)
 	
 	const bufferLength = analyser.frequencyBinCount // 1024
+	
 	F.timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
 	
-	const frequDataArray = new Uint8Array(bufferLength)
+	F.frequDataArray = new Uint8Array(bufferLength)
+	
 	// Start oscillator for one second!
 	osc.start()
 	osc.stop(1)
@@ -97,8 +128,10 @@ launchBiip = () => {
 		analyser.getByteTimeDomainData(F.timuDataArray)
 		// dataArray now holds the buffer data
 		// buffer holds a given limited time interval of amplitude values
-		analyser.getByteFrequencyData(frequDataArray)
-	}, 30)
+		analyser.getByteFrequencyData(F.frequDataArray)
+		
+		log(F.frequDataArray)
+	}, 300)
 	setTimeout(() => { clearInterval(interv) }, 1000)
 	
 }
@@ -121,6 +154,10 @@ askForMike = () => {
 }
 
 document.addEventListener("DOMContentLoaded", (ev) => {
+	
+	// Audio buttons 
+	document.getElementsByClassName('mike-start')[0].addEventListener('click', askForMike)
+	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
 	
 	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
 	document.getElementById('oscilloscope').addEventListener('click', () => {

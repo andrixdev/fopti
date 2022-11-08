@@ -2,7 +2,6 @@
 	--the-var: hsl(0, 50%, 0%);
 }
 
-
 html {
 	width: 100%;
 }
@@ -27,7 +26,6 @@ p {
 	text-shadow: white 0 0 4px;
 }
 
-
 nav,
 main {
 	background: hsla(0, 0%, 0%, 0.95);
@@ -47,11 +45,27 @@ nav p:hover {
 	background: white;
 	color: black;
 }
+#audio-buttons {
+	display: flex;
+	justify-content: center;
+	margin-top: 3rem;
+}
+#audio-buttons button {
+	margin: 0 1rem;
+}
 main {
 	padding: 1em;
-	
+}
+main p.welcome {
+	text-align: center;
+	margin: 10rem auto;
+	font-size: 4rem;
 }
 #loading-overlay {
 	position: absolute;
 	display: none;
+}
+
+canvas#oscilloscope-canvas {
+	margin: 20px 0;
 }

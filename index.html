@@ -11,10 +11,15 @@
 		<nav>
 			<p id="oscilloscope">Oscilloscope</p>
 			<p id="fft">FFT</p>
+			
+			<div id="audio-buttons">
+				<button class="mike-start">Mike start</button>
+				<button class="oscillator-start">Oscillator start</button>
+			</div>
 		</nav>
 		
 		<main>
-			<p>Main</p>
+			<p class="welcome">Welcome to F⌀PTI</p>
 		</main>
 		
 		<div id="loading-overlay">
@@ -23,18 +28,13 @@
 		
 		<template id="oscilloscope-template">
 			<div id="oscilloscope-container">
-				<div id="osc-buttons">
-					<button class="mike-start">Mike start</button>
-					<button class="oscillator-start">Oscillator start</button>
-				</div>
-				
 				<canvas id="oscilloscope-canvas"></canvas>
 			</div>
 		</template>
 		
 		<template id="fft-template">
 			<div id="fft-container">
-				<p>FFT content</p>
+				<canvas id="fft-canvas"></canvas>
 			</div>
 		</template>
 		
