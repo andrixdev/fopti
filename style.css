@@ -21,9 +21,21 @@ body {
 	padding: 1em;
 	min-height: 90vh
 }
-p {
+button {
+	border-radius: 0;
+	border: white 2px solid;
+	padding: 1em 1.5em;
+	cursor: pointer;
+	background: black;
 	color: white;
-	text-shadow: white 0 0 4px;
+}
+button:hover {
+	background: white;
+	color: black;
+}
+p, h1, h2, h3, button, a {
+	color: white;
+	font-family: Montserrat, sans-serif;
 }
 
 nav,
@@ -35,6 +47,7 @@ nav {
 }
 nav p {
 	text-transform: uppercase;
+	text-shadow: white 0 0 4px;
 	font-size: 1.4rem;
 	text-align: center;
 	cursor: pointer;
@@ -45,27 +58,49 @@ nav p:hover {
 	background: white;
 	color: black;
 }
-#audio-buttons {
+nav #audio-buttons {
 	display: flex;
 	justify-content: center;
 	margin-top: 3rem;
 }
-#audio-buttons button {
+nav #audio-buttons button {
 	margin: 0 1rem;
 }
 main {
 	padding: 1em;
 }
-main p.welcome {
-	text-align: center;
-	margin: 10rem auto;
-	font-size: 4rem;
+.loader-container {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
-#loading-overlay {
-	position: absolute;
-	display: none;
+.loader-container .loader {
+	background: white;
+	height: 30px;
+	width: 30px;
+	animation: rotate 2s infinite;
+}
+#home-container {
+	padding: 4em;
+}
+#home-container p,
+#home-container h1 {
+	text-align: center;
 }
 
-canvas#oscilloscope-canvas {
+#oscilloscope-container canvas#oscilloscope-canvas {
 	margin: 20px 0;
+}
+
+
+
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(450deg);
+	}
 }

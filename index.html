@@ -5,10 +5,12 @@
 		<meta charset="utf-8" />
 		<base href="./" />
 		<!--<base href="https://www.alexandrix.com/fopti" />-->
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat">
 		<link href="style.css" rel="stylesheet" />
 	</head>
 	<body>
 		<nav>
+			<p id="home">Home</p>
 			<p id="oscilloscope">Oscilloscope</p>
 			<p id="fft">FFT</p>
 			
@@ -19,12 +21,20 @@
 		</nav>
 		
 		<main>
-			<p class="welcome">Welcome to F⌀PTI</p>
+			<div class="loader-container">
+				<div class="loader"></div>
+			</div>
 		</main>
 		
-		<div id="loading-overlay">
-			<p>FOPTI</p>
-		</div>
+		<template id="home-template">
+			<div id="home-container">
+				<h1>F⌀PTI</h1>
+				<p><em>Enhanced Michelson interferometer for a sensory understanding of gravitational wave detectors</em></p>
+				<br/>
+				<p>
+				<p>Projet funded by <a href="https://rop.cnrs.fr/" target="_blank">Réseau Optique et Photonique, CNRS</a></p>
+			</div>
+		</template>
 		
 		<template id="oscilloscope-template">
 			<div id="oscilloscope-container">

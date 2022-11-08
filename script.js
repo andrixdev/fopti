@@ -9,12 +9,15 @@
 const F = {
 	audioContext: undefined,
 	timuDataArray: [],
-	frequDataArray: []
+	frequDataArray: [],
+	isMikeOn: false,
+	isOscillatorOn: false
 }
 const log = console.log
 const dom = {
 	main: document.getElementsByTagName('main')[0],
 	templates: {
+		home: document.getElementById('home-template'),
 		oscilloscope: document.getElementById('oscilloscope-template'),
 		fft: document.getElementById('fft-template')
 	}
@@ -122,7 +125,11 @@ launchBiip = () => {
 	
 	// Start oscillator for one second!
 	osc.start()
-	osc.stop(1)
+	F.isOscillatorOn = true
+	
+	let duration = 1
+	osc.stop(duration)
+	setTimeout(() => { F.isOscillatorOn = false }, duration * 1000)
 	
 	let interv = setInterval(() => {
 		analyser.getByteTimeDomainData(F.timuDataArray)
@@ -142,6 +149,7 @@ askForMike = () => {
 			audio: true
 		})
 		.then((stream) => {
+			F.isMikeOn = true
 			F.audioContext = new AudioContext({ sampleRate: 48000 })
 			const source = F.audioContext.createMediaStreamSource(stream);
 		})
@@ -160,16 +168,24 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
 	
 	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
+	document.getElementById('home').addEventListener('click', () => {
+		dom.main.innerHTML = dom.templates.home.innerHTML
+	})
+	
 	document.getElementById('oscilloscope').addEventListener('click', () => {
 		dom.main.innerHTML = dom.templates.oscilloscope.innerHTML
 		
 		initOscilloscopeView()
 	})
 	
+	
 	document.getElementById('fft').addEventListener('click', () => {
 		dom.main.innerHTML = dom.templates.fft.innerHTML
 		
 		initFFTView()
 	})
+	
+	// Init on #home view
+	dom.main.innerHTML = dom.templates.home.innerHTML
 	
 })
