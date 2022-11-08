@@ -45,7 +45,7 @@ main {
 nav {
 	border-right: solid white 1px;
 }
-nav p {
+nav p.tab {
 	text-transform: uppercase;
 	text-shadow: white 0 0 4px;
 	font-size: 1.4rem;
@@ -54,7 +54,8 @@ nav p {
 	padding: 1em;
 	margin: 0;
 }
-nav p:hover {
+nav p.tab:hover,
+nav p.tab.active {
 	background: white;
 	color: black;
 }

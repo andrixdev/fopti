@@ -168,24 +168,41 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
 	
 	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
-	document.getElementById('home').addEventListener('click', () => {
+	let resetActivatedTab = () => {
+		Array.from(document.getElementsByClassName('tab')).forEach((el) => {
+			el.classList = 'tab'
+		})
+	}
+	let setActiveTab = (node) => {
+		node.classList = 'tab active'
+	}
+	
+	
+	document.getElementById('home').addEventListener('click', (ev) => {
 		dom.main.innerHTML = dom.templates.home.innerHTML
+		resetActivatedTab()
+		setActiveTab(ev.target)
 	})
 	
-	document.getElementById('oscilloscope').addEventListener('click', () => {
+	document.getElementById('oscilloscope').addEventListener('click', (ev) => {
 		dom.main.innerHTML = dom.templates.oscilloscope.innerHTML
+		resetActivatedTab()
+		setActiveTab(ev.target)
 		
 		initOscilloscopeView()
 	})
 	
 	
-	document.getElementById('fft').addEventListener('click', () => {
+	document.getElementById('fft').addEventListener('click', (ev) => {
 		dom.main.innerHTML = dom.templates.fft.innerHTML
+		resetActivatedTab()
+		setActiveTab(ev.target)
 		
 		initFFTView()
 	})
 	
 	// Init on #home view
 	dom.main.innerHTML = dom.templates.home.innerHTML
+	setActiveTab(document.getElementById('home'))
 	
 })
