@@ -27,7 +27,8 @@ const dom = {
 	templates: {
 		home: document.getElementById('home-template'),
 		oscilloscope: document.getElementById('oscilloscope-template'),
-		fft: document.getElementById('fft-template')
+		fft: document.getElementById('fft-template'),
+		combined: document.getElementById('combined-template')
 	}
 }
 let initOscilloscopeView = () => {
@@ -51,15 +52,15 @@ let initOscilloscopeView = () => {
 	let frame = 0
 	let loop1 = () => {
 		frame++
-		//log(i)
+		
 		ctx1.clearRect(0, 0, width, height)
 		ctx1.beginPath()
 		
-		ctx1.moveTo(0, F.timuDataArray[0])
+		ctx1.moveTo(0, 255 - F.timuDataArray[0])
 		
 		let step = width / F.timuDataArray.length
 		for (let i = 0; i < F.timuDataArray.length; i++) {
-			ctx1.lineTo(i * step, F.timuDataArray[i])
+			ctx1.lineTo(i * step, 255 - F.timuDataArray[i])
 		}
 		
 		ctx1.stroke()
@@ -89,15 +90,15 @@ let initFFTView = () => {
 	let frame = 0
 	let loop2 = () => {
 		frame++
-		//log(i)
+		
 		ctx2.clearRect(0, 0, width, height)
 		ctx2.beginPath()
 		
-		ctx2.moveTo(0, F.frequDataArray[0])
+		ctx2.moveTo(0, 255 - F.frequDataArray[0])
 		
 		let step = width / F.frequDataArray.length
 		for (let i = 0; i < F.frequDataArray.length; i++) {
-			ctx2.lineTo(i * step, F.frequDataArray[i])
+			ctx2.lineTo(i * step, 255 - F.frequDataArray[i])
 		}
 		
 		ctx2.stroke()
@@ -106,6 +107,44 @@ let initFFTView = () => {
 	}
 	window.requestAnimationFrame(loop2)
 }
+let initCombinedView = () => {
+	// Canvas setup
+	let ctx3 = document.getElementById('combined-canvas').getContext('2d')
+	let container3 = document.getElementById('combined-container'),
+		width = container3.clientWidth,
+		height = 300
+		
+	ctx3.canvas.width = width
+	ctx3.canvas.height = height
+	
+	// Canvas background
+	ctx3.lineWidth = 1
+	ctx3.fillStyle = 'hsla(200, 30%, 5%, 1)'
+	ctx3.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx3.fillRect(0, 0, width, height)
+	
+	// Canvas time loop
+	let frame = 0
+	let loop3 = () => {
+		frame++
+		
+		ctx3.clearRect(0, 0, width, height)
+		ctx3.beginPath()
+		
+		ctx3.moveTo(0, 255 - F.frequDataArray[0])
+		
+		let step = width / F.frequDataArray.length
+		for (let i = 0; i < F.frequDataArray.length; i++) {
+			ctx3.lineTo(i * step, 255 - F.frequDataArray[i])
+		}
+		
+		ctx3.stroke()
+		
+		window.requestAnimationFrame(loop3)
+	}
+	window.requestAnimationFrame(loop3)
+}
+
 
 let startAudio = () => {
 	// Create main audio context with 48kHz sample rate
@@ -140,7 +179,7 @@ let startAudio = () => {
 	// Some music with osci
 	setInterval(() => {
 		F.osci.frequency.value = 100 + 100 * Math.ceil(10 * Math.random())
-	}, 100)
+	}, 200)
 }
 let startOscillator = () => {
 	
@@ -264,6 +303,14 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		setActiveTab(ev.target)
 		
 		initFFTView()
+	})
+	
+	document.getElementById('combined').addEventListener('click', (ev) => {
+		dom.main.innerHTML = dom.templates.combined.innerHTML
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initCombinedView()
 	})
 	
 	// Init on #home view
