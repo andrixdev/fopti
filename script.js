@@ -14,7 +14,8 @@ const F = {
 	timuDataArray: [],
 	frequDataArray: [],
 	isMikeOn: false,
-	isOscillatorOn: false
+	isOscillatorOn: false,
+	timerStart: undefined
 }
 const log = console.log
 const dom = {
@@ -28,9 +29,11 @@ const dom = {
 		home: document.getElementById('home-template'),
 		oscilloscope: document.getElementById('oscilloscope-template'),
 		fft: document.getElementById('fft-template'),
+		timefreq: document.getElementById('timefreq-template'),
 		combined: document.getElementById('combined-template')
 	}
 }
+
 let initOscilloscopeView = () => {
 	
 	// Canvas setup
@@ -42,11 +45,8 @@ let initOscilloscopeView = () => {
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
 	
-	// Canvas background
 	ctx1.lineWidth = 1
-	ctx1.fillStyle = 'hsla(200, 30%, 5%, 1)'
-	ctx1.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
-	ctx1.fillRect(0, 0, width, height)
+	ctx1.strokeStyle = 'white'
 	
 	// Canvas time loop
 	let frame = 0
@@ -80,11 +80,8 @@ let initFFTView = () => {
 	ctx2.canvas.width = width
 	ctx2.canvas.height = height
 	
-	// Canvas background
 	ctx2.lineWidth = 1
-	ctx2.fillStyle = 'hsla(200, 30%, 5%, 1)'
-	ctx2.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
-	ctx2.fillRect(0, 0, width, height)
+	ctx2.strokeStyle = 'white'
 	
 	// Canvas time loop
 	let frame = 0
@@ -107,44 +104,98 @@ let initFFTView = () => {
 	}
 	window.requestAnimationFrame(loop2)
 }
-let initCombinedView = () => {
+let initTimefreqView = () => {
 	// Canvas setup
-	let ctx3 = document.getElementById('combined-canvas').getContext('2d')
-	let container3 = document.getElementById('combined-container'),
+	let ctx3 = document.getElementById('timefreq-canvas').getContext('2d')
+	let container3 = document.getElementById('timefreq-container'),
 		width = container3.clientWidth,
 		height = 300
 		
 	ctx3.canvas.width = width
 	ctx3.canvas.height = height
+	ctx3.globalCompositeOperation = 'lighter'
 	
 	// Canvas background
-	ctx3.lineWidth = 1
-	ctx3.fillStyle = 'hsla(200, 30%, 5%, 1)'
-	ctx3.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx3.fillStyle = 'black'
 	ctx3.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
 	let frame = 0
+	F.timerStart = new Date().getTime()
+	let lastX = 0,
+		newX = 0
 	let loop3 = () => {
 		frame++
 		
-		ctx3.clearRect(0, 0, width, height)
+		newX = ((new Date().getTime() - F.timerStart) % 5000) * width / 5000
+		
 		ctx3.beginPath()
+		ctx3.clearRect((newX + 10) % width, 0, 10, height) // Clear some vertical layer upfront
+		ctx3.closePath()
 		
-		ctx3.moveTo(0, 255 - F.frequDataArray[0])
+		let sections = 50
+		let zoneHeight = height / sections
 		
-		let step = width / F.frequDataArray.length
-		for (let i = 0; i < F.frequDataArray.length; i++) {
-			ctx3.lineTo(i * step, 255 - F.frequDataArray[i])
+		// Just analyse a proportion of all frequencies (lowest picthes)
+		let rangeProportion = 0.3
+		
+		for (let s = 0; s < sections; s++) {
+			let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+			
+			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+			
+			let y = height - height * s / sections
+			let hue = 260 - sampleValue / 255 * 60
+			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
+			let alpha = sampleValue / 255 * 0.5
+			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+			ctx3.fillRect(newX, y, 5, zoneHeight)
+			//ctx3.fillStyle = 'hsla(200, 80%, 50%, ' + F.frequDataArray[y] / 255 + ')'	
 		}
 		
-		ctx3.stroke()
+		lastX = newX
 		
 		window.requestAnimationFrame(loop3)
 	}
 	window.requestAnimationFrame(loop3)
 }
-
+let initCombinedView = () => {
+	// Canvas setup
+	let ctx4 = document.getElementById('combined-canvas').getContext('2d')
+	let container4 = document.getElementById('combined-container'),
+		width = container4.clientWidth,
+		height = 300
+		
+	ctx4.canvas.width = width
+	ctx4.canvas.height = height
+	
+	// Canvas background
+	ctx4.lineWidth = 1
+	ctx4.fillStyle = 'hsla(200, 30%, 5%, 1)'
+	ctx4.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx4.fillRect(0, 0, width, height)
+	
+	// Canvas time loop
+	let frame = 0
+	let loop4 = () => {
+		frame++
+		
+		ctx4.clearRect(0, 0, width, height)
+		ctx4.beginPath()
+		
+		ctx4.moveTo(0, 255 - F.frequDataArray[0])
+		
+		let step = width / F.frequDataArray.length
+		for (let i = 0; i < F.frequDataArray.length; i++) {
+			ctx4.lineTo(i * step, 255 - F.frequDataArray[i])
+		}
+		
+		ctx4.stroke()
+		
+		window.requestAnimationFrame(loop4)
+	}
+	window.requestAnimationFrame(loop4)
+}
 
 let startAudio = () => {
 	// Create main audio context with 48kHz sample rate
@@ -177,9 +228,11 @@ let startAudio = () => {
 	}, 50)
 	
 	// Some music with osci
+	let t = 0
 	setInterval(() => {
-		F.osci.frequency.value = 100 + 100 * Math.ceil(10 * Math.random())
-	}, 200)
+		t++
+		F.osci.frequency.value = 100 + 4000 * Math.sin(t / 20)
+	}, 150)
 }
 let startOscillator = () => {
 	
@@ -303,6 +356,14 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		setActiveTab(ev.target)
 		
 		initFFTView()
+	})
+	
+	document.getElementById('timefreq').addEventListener('click', (ev) => {
+		dom.main.innerHTML = dom.templates.timefreq.innerHTML
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initTimefreqView()
 	})
 	
 	document.getElementById('combined').addEventListener('click', (ev) => {

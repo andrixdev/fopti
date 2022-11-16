@@ -60,6 +60,7 @@ nav p.tab.active {
 	color: black;
 }
 nav #audio-buttons {
+	margin-top: 1em;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
