@@ -61,12 +61,24 @@ nav p.tab.active {
 }
 nav #audio-buttons {
 	display: flex;
+	flex-direction: row;
 	justify-content: center;
-	margin-top: 3rem;
 }
 nav #audio-buttons button {
-	margin: 0 1rem;
+	margin: 1em;
 }
+nav #audio-buttons button.hidden {
+	display: none;
+}
+nav #audio-buttons button.audio-start {
+	width: 100%;
+}
+nav #audio-buttons button.mike-start,
+nav #audio-buttons button.oscillator-start {
+	width: 50%;
+}
+
+
 main {
 	padding: 1em;
 }

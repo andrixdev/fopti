@@ -8,6 +8,9 @@
 // Global variables in F namespace
 const F = {
 	audioContext: undefined,
+	osci: undefined,
+	mike: undefined,
+	analyser: undefined,
 	timuDataArray: [],
 	frequDataArray: [],
 	isMikeOn: false,
@@ -16,6 +19,11 @@ const F = {
 const log = console.log
 const dom = {
 	main: document.getElementsByTagName('main')[0],
+	audioStartButton: document.getElementsByClassName('audio-start')[0],
+	mikeStartButton: document.getElementsByClassName('mike-start')[0],
+	mikeStopButton: document.getElementsByClassName('mike-stop')[0],
+	oscillatorStartButton: document.getElementsByClassName('oscillator-start')[0],
+	oscillatorStopButton: document.getElementsByClassName('oscillator-stop')[0],
 	templates: {
 		home: document.getElementById('home-template'),
 		oscilloscope: document.getElementById('oscilloscope-template'),
@@ -98,51 +106,58 @@ let initFFTView = () => {
 	}
 	window.requestAnimationFrame(loop2)
 }
-launchBiip = () => {
+
+let startAudio = () => {
 	// Create main audio context with 48kHz sample rate
 	F.audioContext = new AudioContext({ sampleRate: 48000 })
 	
 	// Create oscillator source node
-	const osc = new OscillatorNode(F.audioContext, {
+	F.osci = new OscillatorNode(F.audioContext, {
 		frequency: 440,
-		type: 'sine' // "sine", "square", "sawtooth", "triangle"
+		type: "sine" // "sine", "square", "sawtooth", "triangle"
 	})
 	
-	// Link oscillator to audio context destination (for hearing)
-	osc.connect(F.audioContext.destination)
-	
 	// Create audio analyzer
-	const analyser = new AnalyserNode(F.audioContext) // Created with FFT size of 2048 (2^11)
-	
-	// Don't forget to connect it with analyser!
-	osc.connect(analyser)
-	
-	const bufferLength = analyser.frequencyBinCount // 1024
-	
+	F.analyser = new AnalyserNode(F.audioContext) // Created with FFT size of 2048 (2^11)
+	const bufferLength = F.analyser.frequencyBinCount // 1024
 	F.timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
-	
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
-	// Start oscillator for one second!
-	osc.start()
-	F.isOscillatorOn = true
+	// Start oscillator (without hearing or analysing it yet)
+	if (!F.isOscillatorOn) {
+		F.osci.start()
+		F.isOscillatorOn = true
+	}
 	
-	let duration = 1
-	osc.stop(duration)
-	setTimeout(() => { F.isOscillatorOn = false }, duration * 1000)
-	
+	// Start analyser passing data to glabal data arrays
 	let interv = setInterval(() => {
-		analyser.getByteTimeDomainData(F.timuDataArray)
+		F.analyser.getByteTimeDomainData(F.timuDataArray)
 		// dataArray now holds the buffer data
 		// buffer holds a given limited time interval of amplitude values
-		analyser.getByteFrequencyData(F.frequDataArray)
-		
-		log(F.frequDataArray)
-	}, 300)
-	setTimeout(() => { clearInterval(interv) }, 1000)
+		F.analyser.getByteFrequencyData(F.frequDataArray)
+	}, 50)
+	
+	// Some music with osci
+	setInterval(() => {
+		F.osci.frequency.value = 100 + 100 * Math.ceil(10 * Math.random())
+	}, 100)
+}
+let startOscillator = () => {
+	
+	// Link oscillator to audio context destination (for hearing)
+	F.osci.connect(F.audioContext.destination)
+	
+	// Don't forget to connect it with analyser!
+	F.osci.connect(F.analyser)
+	
+	let duration = 1
+	//F.osci.stop(duration)
+	setTimeout(() => {
+		//F.isOscillatorOn = false
+	}, duration * 1000)
 	
 }
-askForMike = () => {
+let startMicrophone = () => {
 	if (navigator.mediaDevices) {
 		console.log("getUserMedia supported.")
 		navigator.mediaDevices.getUserMedia({
@@ -150,8 +165,11 @@ askForMike = () => {
 		})
 		.then((stream) => {
 			F.isMikeOn = true
-			F.audioContext = new AudioContext({ sampleRate: 48000 })
-			const source = F.audioContext.createMediaStreamSource(stream);
+			F.mike = F.audioContext.createMediaStreamSource(stream)
+			// Link to destination for hearing
+			F.mike.connect(F.audioContext.destination)
+			// Connect it with analyser!
+			F.mike.connect(F.analyser)
 		})
 		.catch((err) => {
 			console.log(`The following getUserMedia error occurred: ${err}`);
@@ -160,12 +178,61 @@ askForMike = () => {
 		console.log("getUserMedia is not supported on this browser!");
 	}
 }
+let stopOscillator = () => {
+	// Don't kill the adio node but just disconnect from analyser and output
+	F.osci.disconnect(F.analyser)
+	F.osci.disconnect(F.audioContext.destination)
+}
+let stopMicrophone = () => {
+	// Don't kill the adio node but just disconnect from analyser and output
+	F.mike.disconnect(F.audioContext.destination)
+	F.mike.disconnect(F.analyser)
+}
 
 document.addEventListener("DOMContentLoaded", (ev) => {
 	
 	// Audio buttons 
-	document.getElementsByClassName('mike-start')[0].addEventListener('click', askForMike)
-	document.getElementsByClassName('oscillator-start')[0].addEventListener('click', launchBiip)
+	dom.audioStartButton.addEventListener('click', () => {
+		// Display the other buttons
+		dom.audioStartButton.classList.add('hidden')
+		dom.mikeStartButton.classList.remove('hidden')
+		dom.oscillatorStartButton.classList.remove('hidden')
+		
+		// Do some global audio init
+		startAudio()
+	})
+	dom.mikeStartButton.addEventListener('click', () => {
+		// Toggle start/stop button hidden status
+		dom.mikeStopButton.classList.remove('hidden')
+		dom.mikeStartButton.classList.add('hidden')
+		dom.oscillatorStartButton.classList.add('hidden')
+		
+		startMicrophone()
+	})
+	dom.oscillatorStartButton.addEventListener('click', () => {
+		// Toggle start/stop button hidden status
+		dom.oscillatorStopButton.classList.remove('hidden')
+		dom.oscillatorStartButton.classList.add('hidden')
+		dom.mikeStartButton.classList.add('hidden')
+		
+		startOscillator()
+	})
+	dom.mikeStopButton.addEventListener('click', () => {
+		// Toggle start/stop button hidden status
+		dom.mikeStopButton.classList.add('hidden')
+		dom.mikeStartButton.classList.remove('hidden')
+		dom.oscillatorStartButton.classList.remove('hidden')
+		
+		stopMicrophone()
+	})
+	dom.oscillatorStopButton.addEventListener('click', () => {
+		// Toggle start/stop button hidden status
+		dom.oscillatorStopButton.classList.add('hidden')
+		dom.oscillatorStartButton.classList.remove('hidden')
+		dom.mikeStartButton.classList.remove('hidden')
+		
+		stopOscillator()
+	})
 	
 	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
 	let resetActivatedTab = () => {
@@ -176,7 +243,6 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	let setActiveTab = (node) => {
 		node.classList = 'tab active'
 	}
-	
 	
 	document.getElementById('home').addEventListener('click', (ev) => {
 		dom.main.innerHTML = dom.templates.home.innerHTML
@@ -191,7 +257,6 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		
 		initOscilloscopeView()
 	})
-	
 	
 	document.getElementById('fft').addEventListener('click', (ev) => {
 		dom.main.innerHTML = dom.templates.fft.innerHTML
