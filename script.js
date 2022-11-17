@@ -114,30 +114,41 @@ let initTimefreqView = () => {
 	ctx3.canvas.width = width
 	ctx3.canvas.height = height
 	ctx3.globalCompositeOperation = 'lighter'
+	//ctx3.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
 	// Canvas background
 	ctx3.fillStyle = 'black'
 	ctx3.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
-	let frame = 0
 	F.timerStart = new Date().getTime()
-	let lastX = 0,
-		newX = 0
+	let frame = 0,
+		lastX = 0,
+		X = 0,
+		time = F.timerStart,
+		radarMS = 5000, // ms
+		sections = 50,
+		zoneHeight = height / sections
+		
+	// Just analyse a proportion of all frequencies (lowest picthes)
+	let rangeProportion = 0.3
+		
 	let loop3 = () => {
 		frame++
+		let newTime = new Date().getTime()
 		
-		newX = ((new Date().getTime() - F.timerStart) % 5000) * width / 5000
+		// Radar over X axis
+		X = width * ((newTime - F.timerStart) % radarMS) / radarMS
 		
+		// Paint wider rectangles if refresh time is longer
+		let thickness = width * (newTime - time) / radarMS
+		
+		/*
 		ctx3.beginPath()
-		ctx3.clearRect((newX + 10) % width, 0, 10, height) // Clear some vertical layer upfront
+		ctx3.fillStyle = 'black'
+		ctx3.clearRect(X - thickness, 0, thickness, height)
 		ctx3.closePath()
-		
-		let sections = 50
-		let zoneHeight = height / sections
-		
-		// Just analyse a proportion of all frequencies (lowest picthes)
-		let rangeProportion = 0.3
+		*/
 		
 		for (let s = 0; s < sections; s++) {
 			let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -147,19 +158,32 @@ let initTimefreqView = () => {
 			let y = height - height * s / sections
 			let hue = 260 - sampleValue / 255 * 60
 			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
-			let alpha = sampleValue / 255 * 0.5
+			let alpha = sampleValue / 255 * 0.7
+			
+			ctx3.clearRect(X - thickness, y, thickness, zoneHeight)
 			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-			ctx3.fillRect(newX, y, 5, zoneHeight)
-			//ctx3.fillStyle = 'hsla(200, 80%, 50%, ' + F.frequDataArray[y] / 255 + ')'	
+			
+			ctx3.fillRect(X - thickness, y, thickness, zoneHeight)
+			
+			// Draw a shadow circle around
+			ctx3.beginPath()
+			let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
+			radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
+			ctx3.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
+			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
+			ctx3.fill()
+			ctx3.closePath()
 		}
 		
-		lastX = newX
+		lastX = X
+		time = newTime
 		
 		window.requestAnimationFrame(loop3)
 	}
 	window.requestAnimationFrame(loop3)
 }
 let initCombinedView = () => {
+	/*
 	// Canvas setup
 	let ctx4 = document.getElementById('combined-canvas').getContext('2d')
 	let container4 = document.getElementById('combined-container'),
@@ -195,6 +219,7 @@ let initCombinedView = () => {
 		window.requestAnimationFrame(loop4)
 	}
 	window.requestAnimationFrame(loop4)
+	*/
 }
 
 let startAudio = () => {
@@ -231,13 +256,14 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 100 + 4000 * Math.sin(t / 20)
-	}, 150)
+		F.osci.frequency.value = 2100 + 2000 * Math.sin(t / 3)
+	}, 300)
+	
 }
 let startOscillator = () => {
 	
 	// Link oscillator to audio context destination (for hearing)
-	F.osci.connect(F.audioContext.destination)
+	//F.osci.connect(F.audioContext.destination)
 	
 	// Don't forget to connect it with analyser!
 	F.osci.connect(F.analyser)

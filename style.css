@@ -79,7 +79,6 @@ nav #audio-buttons button.oscillator-start {
 	width: 50%;
 }
 
-
 main {
 	padding: 1em;
 }
@@ -107,8 +106,6 @@ main {
 #oscilloscope-container canvas#oscilloscope-canvas {
 	margin: 20px 0;
 }
-
-
 
 @keyframes rotate {
 	from {
