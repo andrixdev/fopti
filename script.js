@@ -195,7 +195,7 @@ let initCombinedView = () => {
 	let ctx4 = document.getElementById('combined-canvas').getContext('2d')
 	let container4 = document.getElementById('combined-container'),
 		width = container4.clientWidth,
-		height = 400
+		height = 500
 		
 	ctx4.canvas.width = width
 	ctx4.canvas.height = height
