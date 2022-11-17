@@ -349,14 +349,14 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 2100 + 2000 * Math.sin(t / 3)
-	}, 300)
+		F.osci.frequency.value = 100 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
+	}, 500)
 	
 }
 let startOscillator = () => {
 	
 	// Link oscillator to audio context destination (for hearing)
-	//F.osci.connect(F.audioContext.destination)
+	F.osci.connect(F.audioContext.destination)
 	
 	// Don't forget to connect it with analyser!
 	F.osci.connect(F.analyser)
