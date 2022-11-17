@@ -96,12 +96,15 @@ nav #audio-buttons button.oscillator-start {
 	overflow: hidden;
 }
 #home-container {
-	padding: 4em;
-	height: calc(100% - 2 * 4em);
+	padding: 6rem 2rem;
+	height: calc(100% - 2 * 6rem);
 }
 #home-container p,
 #home-container h1 {
 	text-align: center;
+}
+#home-container h1 {
+	font-size: 2.5rem;
 }
 .container canvas {
 	position: absolute;

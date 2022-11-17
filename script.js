@@ -133,7 +133,7 @@ let initTimefreqView = () => {
 		lastX = 0,
 		X = 0,
 		time = F.ctx3TimerStart,
-		radarMS = 5000, // ms
+		radarMS = 4000, // ms
 		sections = 50,
 		zoneHeight = height3 / sections
 		
