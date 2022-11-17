@@ -21,6 +21,7 @@ const F = {
 const log = console.log
 const dom = {
 	main: document.getElementsByTagName('main')[0],
+	navTabs: document.getElementsByClassName('tab'),
 	audioStartButton: document.getElementsByClassName('audio-start')[0],
 	mikeStartButton: document.getElementsByClassName('mike-start')[0],
 	mikeStopButton: document.getElementsByClassName('mike-stop')[0],
@@ -40,11 +41,11 @@ let initOscilloscopeView = () => {
 	// Canvas setup
 	let ctx1 = document.getElementById('oscilloscope-canvas').getContext('2d')
 	let container1 = document.getElementById('oscilloscope-container'),
-		width = container1.clientWidth,
-		height = 300
+		width1 = container1.clientWidth,
+		height1 = Math.min(container1.clientHeight, 350)
 		
-	ctx1.canvas.width = width
-	ctx1.canvas.height = height
+	ctx1.canvas.width = width1
+	ctx1.canvas.height = height1
 	
 	ctx1.lineWidth = 1
 	ctx1.strokeStyle = 'white'
@@ -54,14 +55,17 @@ let initOscilloscopeView = () => {
 	let loop1 = () => {
 		frame++
 		
-		ctx1.clearRect(0, 0, width, height)
+		ctx1.clearRect(0, 0, width1, height1)
 		ctx1.beginPath()
 		
-		ctx1.moveTo(0, 255 - F.timuDataArray[0])
-		
-		let step = width / F.timuDataArray.length
+		let step = width1 / F.timuDataArray.length
 		for (let i = 0; i < F.timuDataArray.length; i++) {
-			ctx1.lineTo(i * step, 255 - F.timuDataArray[i])
+			if (i == 0) {
+				ctx1.moveTo(i * step, height1 - height1 * F.timuDataArray[i] / 255)
+			} else {
+				ctx1.lineTo(i * step, height1 - height1 * F.timuDataArray[i] / 255)
+			}
+			
 		}
 		
 		ctx1.stroke()
@@ -75,11 +79,11 @@ let initFFTView = () => {
 	// Canvas setup
 	let ctx2 = document.getElementById('fft-canvas').getContext('2d')
 	let container2 = document.getElementById('fft-container'),
-		width = container2.clientWidth,
-		height = 300
+		width2 = container2.clientWidth,
+		height2 = Math.min(container2.clientHeight, 400)
 		
-	ctx2.canvas.width = width
-	ctx2.canvas.height = height
+	ctx2.canvas.width = width2
+	ctx2.canvas.height = height2
 	
 	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
@@ -89,14 +93,16 @@ let initFFTView = () => {
 	let loop2 = () => {
 		frame++
 		
-		ctx2.clearRect(0, 0, width, height)
+		ctx2.clearRect(0, 0, width2, height2)
 		ctx2.beginPath()
 		
-		ctx2.moveTo(0, 255 - F.frequDataArray[0])
-		
-		let step = width / F.frequDataArray.length
+		let step = width2 / F.frequDataArray.length
 		for (let i = 0; i < F.frequDataArray.length; i++) {
-			ctx2.lineTo(i * step, 255 - F.frequDataArray[i])
+			if (i == 0) {
+				ctx2.moveTo(i * step, height2 - height2 * F.frequDataArray[i] / 255)
+			} else {
+				ctx2.lineTo(i * step, height2 - height2 * F.frequDataArray[i] / 255)
+			}
 		}
 		
 		ctx2.stroke()
@@ -109,17 +115,17 @@ let initTimefreqView = () => {
 	// Canvas setup
 	let ctx3 = document.getElementById('timefreq-canvas').getContext('2d')
 	let container3 = document.getElementById('timefreq-container'),
-		width = container3.clientWidth,
-		height = 300
+		width3 = container3.clientWidth,
+		height3 = Math.min(container3.clientHeight, 400)
 		
-	ctx3.canvas.width = width
-	ctx3.canvas.height = height
+	ctx3.canvas.width = width3
+	ctx3.canvas.height = height3
 	ctx3.globalCompositeOperation = 'lighter'
 	//ctx3.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
 	// Canvas background
 	ctx3.fillStyle = 'black'
-	ctx3.fillRect(0, 0, width, height)
+	ctx3.fillRect(0, 0, width3, height3)
 	
 	// Canvas time loop
 	F.ctx3TimerStart = new Date().getTime()
@@ -129,7 +135,7 @@ let initTimefreqView = () => {
 		time = F.ctx3TimerStart,
 		radarMS = 5000, // ms
 		sections = 50,
-		zoneHeight = height / sections
+		zoneHeight = height3 / sections
 		
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
@@ -139,15 +145,15 @@ let initTimefreqView = () => {
 		let newTime = new Date().getTime()
 		
 		// Radar over X axis
-		X = width * ((newTime - F.ctx3TimerStart) % radarMS) / radarMS
+		X = width3 * ((newTime - F.ctx3TimerStart) % radarMS) / radarMS
 		
 		// Paint wider rectangles if refresh time is longer
-		let thickness = width * (newTime - time) / radarMS
+		let thickness = width3 * (newTime - time) / radarMS
 		
 		/*
 		ctx3.beginPath()
 		ctx3.fillStyle = 'black'
-		ctx3.clearRect(X - thickness, 0, thickness, height)
+		ctx3.clearRect(X - thickness, 0, thickness, height3)
 		ctx3.closePath()
 		*/
 		
@@ -157,7 +163,7 @@ let initTimefreqView = () => {
 			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
 			
 			// Position of colored zone
-			let y = height - height * s / sections
+			let y = height3 - height3 * s / sections
 			
 			// Colors
 			let hue = 260 - sampleValue / 255 * 60
@@ -195,7 +201,7 @@ let initCombinedView = () => {
 	// First canvas setup (radial timefreq)
 	let ctx4 = document.getElementById('combined-timefreq-canvas').getContext('2d'),
 		width4 = container4.clientWidth,
-		height4 = 500
+		height4 = Math.min(container4.clientHeight, 600)
 		
 	ctx4.canvas.width = width4
 	ctx4.canvas.height = height4
@@ -228,7 +234,6 @@ let initCombinedView = () => {
 		
 		// Radar over Theta
 		theta = 2 * Math.PI * ((newTime - F.ctx4TimerStart) % radarMS) / radarMS
-		
 		
 		// Paint wider arcs (in theta) if refresh time is longer
 		let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
@@ -403,6 +408,11 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		dom.audioStartButton.classList.add('hidden')
 		dom.mikeStartButton.classList.remove('hidden')
 		dom.oscillatorStartButton.classList.remove('hidden')
+		
+		// Display the other tabs
+		Array.from(dom.navTabs).forEach((el) => {
+			el.classList.remove('hidden')
+		})
 		
 		// Do some global audio init
 		startAudio()
