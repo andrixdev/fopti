@@ -15,7 +15,8 @@ const F = {
 	frequDataArray: [],
 	isMikeOn: false,
 	isOscillatorOn: false,
-	timerStart: undefined
+	ctx3TimerStart: undefined,
+	ctx4TimerStart: undefined
 }
 const log = console.log
 const dom = {
@@ -121,11 +122,11 @@ let initTimefreqView = () => {
 	ctx3.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
-	F.timerStart = new Date().getTime()
+	F.ctx3TimerStart = new Date().getTime()
 	let frame = 0,
 		lastX = 0,
 		X = 0,
-		time = F.timerStart,
+		time = F.ctx3TimerStart,
 		radarMS = 5000, // ms
 		sections = 50,
 		zoneHeight = height / sections
@@ -138,7 +139,7 @@ let initTimefreqView = () => {
 		let newTime = new Date().getTime()
 		
 		// Radar over X axis
-		X = width * ((newTime - F.timerStart) % radarMS) / radarMS
+		X = width * ((newTime - F.ctx3TimerStart) % radarMS) / radarMS
 		
 		// Paint wider rectangles if refresh time is longer
 		let thickness = width * (newTime - time) / radarMS
@@ -155,20 +156,26 @@ let initTimefreqView = () => {
 			
 			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
 			
+			// Position of colored zone
 			let y = height - height * s / sections
+			
+			// Colors
 			let hue = 260 - sampleValue / 255 * 60
 			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
 			let alpha = sampleValue / 255 * 0.7
 			
+			// Clear previous (not painting black because of composite 'lighter' mode)
 			ctx3.clearRect(X - thickness, y, thickness, zoneHeight)
-			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
 			
+			// Fill!
+			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
 			ctx3.fillRect(X - thickness, y, thickness, zoneHeight)
 			
 			// Draw a shadow circle around
 			ctx3.beginPath()
 			let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
 			radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
+			
 			ctx3.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
 			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
 			ctx3.fill()
@@ -183,43 +190,77 @@ let initTimefreqView = () => {
 	window.requestAnimationFrame(loop3)
 }
 let initCombinedView = () => {
-	/*
+	
 	// Canvas setup
 	let ctx4 = document.getElementById('combined-canvas').getContext('2d')
 	let container4 = document.getElementById('combined-container'),
 		width = container4.clientWidth,
-		height = 300
+		height = 400
 		
 	ctx4.canvas.width = width
 	ctx4.canvas.height = height
+	ctx4.imageSmoothingEnabled = true
 	
 	// Canvas background
-	ctx4.lineWidth = 1
-	ctx4.fillStyle = 'hsla(200, 30%, 5%, 1)'
-	ctx4.strokeStyle = 'hsla(0, 0%, 100%, 0.95)'
+	ctx4.fillStyle = 'black'
 	ctx4.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
-	let frame = 0
+	F.ctx4TimerStart = new Date().getTime()
+	let frame = 0,
+		lastTheta = 0,
+		theta = 0,
+		time = F.ctx4TimerStart,
+		radarMS = 5000, // ms
+		sections = 50,
+		baseRadius = 100,
+		maxRadius = 400,
+		zoneHeight = (maxRadius - baseRadius) / sections,
+		centerX = width / 2,
+		centerY = height / 2
+	
+	// Just analyse a proportion of all frequencies (lowest picthes)
+	let rangeProportion = 0.3
+		
 	let loop4 = () => {
 		frame++
+		let newTime = new Date().getTime()
 		
-		ctx4.clearRect(0, 0, width, height)
-		ctx4.beginPath()
+		// Radar over Theta
+		theta = 2 * Math.PI * ((newTime - F.ctx4TimerStart) % radarMS) / radarMS
 		
-		ctx4.moveTo(0, 255 - F.frequDataArray[0])
 		
-		let step = width / F.frequDataArray.length
-		for (let i = 0; i < F.frequDataArray.length; i++) {
-			ctx4.lineTo(i * step, 255 - F.frequDataArray[i])
+		// Paint wider arcs (in theta) if refresh time is longer
+		let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
+		
+		for (let s = 0; s < sections; s++) {
+			let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+			
+			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+			
+			let r = baseRadius + (maxRadius - baseRadius) * s / sections
+			
+			// Colors
+			let hue = 260 - sampleValue / 255 * 60
+			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
+			let alpha = sampleValue / 255 * 0.7
+			
+			// Draw new arc
+			ctx4.beginPath()
+			ctx4.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
+			ctx4.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+			ctx4.lineWidth = zoneHeight
+			ctx4.stroke()
+			ctx4.closePath()
 		}
 		
-		ctx4.stroke()
+		lastTheta = theta
+		time = newTime
 		
 		window.requestAnimationFrame(loop4)
 	}
 	window.requestAnimationFrame(loop4)
-	*/
+	
 }
 
 let startAudio = () => {
