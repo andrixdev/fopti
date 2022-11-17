@@ -190,24 +190,24 @@ let initTimefreqView = () => {
 	window.requestAnimationFrame(loop3)
 }
 let initCombinedView = () => {
+	let container4 = document.getElementById('combined-container')
 	
-	// Canvas setup
-	let ctx4 = document.getElementById('combined-canvas').getContext('2d')
-	let container4 = document.getElementById('combined-container'),
-		width = container4.clientWidth,
-		height = 500
+	// First canvas setup (radial timefreq)
+	let ctx4 = document.getElementById('combined-timefreq-canvas').getContext('2d'),
+		width4 = container4.clientWidth,
+		height4 = 500
 		
-	ctx4.canvas.width = width
-	ctx4.canvas.height = height
+	ctx4.canvas.width = width4
+	ctx4.canvas.height = height4
 	ctx4.imageSmoothingEnabled = true
 	
 	// Canvas background
 	ctx4.fillStyle = 'black'
-	ctx4.fillRect(0, 0, width, height)
+	ctx4.fillRect(0, 0, width4, height4)
 	
 	// Canvas time loop
 	F.ctx4TimerStart = new Date().getTime()
-	let frame = 0,
+	let frame4 = 0,
 		lastTheta = 0,
 		theta = 0,
 		time = F.ctx4TimerStart,
@@ -216,14 +216,14 @@ let initCombinedView = () => {
 		baseRadius = 100,
 		maxRadius = 400,
 		zoneHeight = (maxRadius - baseRadius) / sections,
-		centerX = width / 2,
-		centerY = height / 2
+		centerX = width4 / 2,
+		centerY = height4 / 2
 	
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
 		
 	let loop4 = () => {
-		frame++
+		frame4++
 		let newTime = new Date().getTime()
 		
 		// Radar over Theta
@@ -247,9 +247,9 @@ let initCombinedView = () => {
 			
 			// Draw new arc
 			ctx4.beginPath()
-			ctx4.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
 			ctx4.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
 			ctx4.lineWidth = zoneHeight
+			ctx4.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
 			ctx4.stroke()
 			ctx4.closePath()
 		}
@@ -260,6 +260,53 @@ let initCombinedView = () => {
 		window.requestAnimationFrame(loop4)
 	}
 	window.requestAnimationFrame(loop4)
+	
+	// Central circle to host oscilloscope canvas (ctx5)
+	ctx4.beginPath()
+	ctx4.strokeStyle = 'white'
+	ctx4.lineWidth = 4
+	ctx4.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
+	ctx4.stroke()
+	ctx4.closePath()
+	
+	// Second canvas setup (oscilloscope)
+	let ctx5 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
+	let width5 = 200,
+		height5 = 200
+		
+	ctx5.canvas.width = width5
+	ctx5.canvas.height = height5
+	
+	ctx5.lineWidth = 1
+	ctx5.strokeStyle = 'white'
+	
+	// Canvas time loop
+	let frame5 = 0
+	let loop5 = () => {
+		frame5++
+		
+		ctx5.clearRect(0, 0, width5, height5)
+		ctx5.beginPath()
+		
+		let l = F.timuDataArray.length,
+			step = width5 / l
+		for (let i = 0; i < F.timuDataArray.length; i += 5) {
+			let y = height5 * (255 - F.timuDataArray[i]) / 255
+			y = height5 / 2 + 0.8 * (y - height5 / 2) * Math.pow(Math.sin(Math.PI * i / l), 2)
+
+			if (i == 0) {
+				ctx5.moveTo(0, y)
+			} else {
+				ctx5.lineTo(i * step, y)
+			}
+			
+		}
+		
+		ctx5.stroke()
+		
+		window.requestAnimationFrame(loop5)
+	}
+	window.requestAnimationFrame(loop5)
 	
 }
 
