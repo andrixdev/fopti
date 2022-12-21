@@ -56,6 +56,7 @@ nav p.tab {
 	cursor: pointer;
 	padding: 1em;
 	margin: 0;
+	transition: background 200ms, color 200ms;
 }
 nav p.tab:hover,
 nav p.tab.active {
@@ -91,18 +92,11 @@ nav #audio-buttons button.oscillator-start {
 	height: 100%;
 	overflow: hidden;
 }
-#home-container {
-	padding: 6rem 2rem;
-	height: calc(100% - 2 * 6rem);
+.canvas-container {
+	position: relative;
+	height: calc(100% - 60px);
 }
-#home-container p,
-#home-container h1 {
-	text-align: center;
-}
-#home-container h1 {
-	font-size: 2.5rem;
-}
-.container canvas {
+.canvas-container canvas {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -110,6 +104,57 @@ nav #audio-buttons button.oscillator-start {
 	bottom: 0;
 	margin: auto;
 }
+.controls {
+	height: 60px;
+	border: solid 1px white;
+	display: flex;
+	flex-flow: row;
+	justify-content: space-around;
+}
+.control-tab {
+	width: 150px;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+.control-tab .key-icon {
+	width: 15px;
+	height: 15px;
+	font-size: 10px;
+	line-height: 10px;
+	padding: 2px 0 2px 4px;
+	border: solid 1px white;
+	border-radius: 2px;
+	margin-right: 7px;
+	box-shadow: white -2px 2px 0;
+	transition: background 200ms, color 200ms;
+}
+.control-tab .key-icon::after {
+	content: attr(data-key);
+	text-align: center;
+	color: white;
+	font-size: 15px;
+	line-height: 14px;
+}
+.control-tab .key-info {
+	line-height: 1em;
+	opacity: .75;
+	font-size: 15px;
+}
+.control-tab.active .key-icon {
+	background: white;
+}
+.control-tab.active .key-icon::after {
+	color: black;
+}
+.control-tab.active .key-info {
+	opacity: 1;
+	text-shadow: white 0 0 3px;
+}
+
+/* Specific */
 .loader-container {
 	height: 100%;
 	width: 100%;
@@ -122,6 +167,17 @@ nav #audio-buttons button.oscillator-start {
 	height: 30px;
 	width: 30px;
 	animation: rotate 2s infinite;
+}
+#home-container {
+	padding: 6rem 2rem;
+	height: calc(100% - 2 * 6rem);
+}
+#home-container p,
+#home-container h1 {
+	text-align: center;
+}
+#home-container h1 {
+	font-size: 2.5rem;
 }
 
 @keyframes rotate {

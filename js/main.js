@@ -6,7 +6,7 @@
  */
 
 // Global variables in F namespace
-const F = {
+let F = {
 	audioContext: undefined,
 	osci: undefined,
 	mike: undefined,
