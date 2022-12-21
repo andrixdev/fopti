@@ -39,40 +39,85 @@ const dom = {
 let initOscilloscopeView = () => {
 	
 	// Canvas setup
-	let ctx1 = document.getElementById('oscilloscope-canvas').getContext('2d')
-	let container1 = document.getElementById('oscilloscope-container'),
-		width1 = container1.clientWidth,
-		height1 = Math.min(container1.clientHeight, 350)
+	let ctx1 = document.getElementById('oscilloscope-curve-canvas').getContext('2d'),
+		ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d')
 		
-	ctx1.canvas.width = width1
-	ctx1.canvas.height = height1
-	
+	let container = document.getElementById('oscilloscope-container'),
+		width = container.clientWidth,
+		height = Math.min(container.clientHeight, 350)
+		
+	ctx1.canvas.width = width
+	ctx1.canvas.height = height
 	ctx1.lineWidth = 1
 	ctx1.strokeStyle = 'white'
 	
+	ctx2.canvas.width = width
+	ctx2.canvas.height = height
+	ctx2.lineWidth = 1
+	ctx2.strokeStyle = 'white'
+	ctx2.fillStyle = 'white'
+	
+	let axesAreDrawn = false
+	let drawAxes = () => {
+		// Horizontal
+		ctx2.beginPath()
+		ctx2.moveTo(5/100 * width, height / 2)
+		ctx2.lineTo(95/100 * width, height / 2)
+		ctx2.stroke()
+		ctx2.closePath()
+		
+		// Vertical
+		ctx2.beginPath()
+		ctx2.moveTo(95/100 * width, height)
+		ctx2.lineTo(95/100 * width, 0)
+		ctx2.stroke()
+		
+		// Vertical arrow
+		ctx2.lineTo(94.75/100 * width, 8/100 * height)
+		ctx2.lineTo(95.25/100 * width, 8/100 * height)
+		ctx2.lineTo(95/100 * width, 0)
+		ctx2.fill()
+		ctx2.closePath()
+	}
+	
 	// Canvas time loop
 	let frame = 0
-	let loop1 = () => {
+	let loop = () => {
 		frame++
 		
-		ctx1.clearRect(0, 0, width1, height1)
-		ctx1.beginPath()
+		// Clear everything on curve canvas
+		ctx1.clearRect(0, 0, width, height)
 		
-		let step = width1 / F.timuDataArray.length
-		for (let i = 0; i < F.timuDataArray.length; i++) {
-			if (i == 0) {
-				ctx1.moveTo(i * step, height1 - height1 * F.timuDataArray[i] / 255)
-			} else {
-				ctx1.lineTo(i * step, height1 - height1 * F.timuDataArray[i] / 255)
-			}
-			
+		// Maybe clear or draw axes
+		if (!C.axisToggle && axesAreDrawn) {
+			ctx2.clearRect(0, 0, width, height)
+			axesAreDrawn = false
+		} else if (C.axisToggle & !axesAreDrawn) {
+			drawAxes()
+			axesAreDrawn = true
 		}
 		
+		// Draw curve
+		ctx1.beginPath()
+		let step = (axesAreDrawn ? 90/100 : 100/100) * width / F.timuDataArray.length
+		for (let i = 0; i < F.timuDataArray.length; i++) {
+			let x = (axesAreDrawn ? 5/100 * width : 0) + i * step
+			let yCore = height - height * F.timuDataArray[i] / 255
+			let y = axesAreDrawn ? height / 2 + 80/100 * (yCore - height / 2) : yCore 
+			
+			if (i == 0) {
+				ctx1.moveTo(x, y)
+			} else {
+				ctx1.lineTo(x, y)
+			}
+		}
 		ctx1.stroke()
+		ctx1.closePath()
 		
-		window.requestAnimationFrame(loop1)
+		// Call next animation frame
+		window.requestAnimationFrame(loop)
 	}
-	window.requestAnimationFrame(loop1)
+	window.requestAnimationFrame(loop)
 	
 }
 let initFFTView = () => {
@@ -106,6 +151,7 @@ let initFFTView = () => {
 		}
 		
 		ctx2.stroke()
+		ctx2.closePath()
 		
 		window.requestAnimationFrame(loop2)
 	}
