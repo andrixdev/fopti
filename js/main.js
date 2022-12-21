@@ -40,11 +40,12 @@ let initOscilloscopeView = () => {
 	
 	// Canvas setup
 	let ctx1 = document.getElementById('oscilloscope-curve-canvas').getContext('2d'),
-		ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d')
+		ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d'),
+		ctx3 = document.getElementById('oscilloscope-grid-canvas').getContext('2d')
 		
 	let container = document.getElementById('oscilloscope-container'),
 		width = container.clientWidth,
-		height = Math.min(container.clientHeight, 350)
+		height = Math.min(container.clientHeight, 500)
 		
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
@@ -56,28 +57,94 @@ let initOscilloscopeView = () => {
 	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
 	ctx2.fillStyle = 'white'
+	ctx2.font = '15px Raleway'
+	ctx2.textAlign = 'center'
 	
-	let axesAreDrawn = false
+	ctx3.canvas.width = width
+	ctx3.canvas.height = height
+	ctx3.lineWidth = 1
+	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+	ctx3.fillStyle = 'white'
+	ctx3.font = '15px Raleway'
+	ctx3.textAlign = 'center'
+	
+	let axesAreDrawn = false,
+		gridIsDrawn = false
+		
 	let drawAxes = () => {
 		// Horizontal
 		ctx2.beginPath()
-		ctx2.moveTo(5/100 * width, height / 2)
-		ctx2.lineTo(95/100 * width, height / 2)
+		ctx2.moveTo(10/100 * width, height / 2)
+		ctx2.lineTo(92/100 * width, height / 2)
 		ctx2.stroke()
 		ctx2.closePath()
 		
 		// Vertical
 		ctx2.beginPath()
-		ctx2.moveTo(95/100 * width, height)
-		ctx2.lineTo(95/100 * width, 0)
+		ctx2.moveTo(90/100 * width, 90/100 * height)
+		ctx2.lineTo(90/100 * width, 15/100 * height)
 		ctx2.stroke()
+		ctx2.closePath()
 		
 		// Vertical arrow
-		ctx2.lineTo(94.75/100 * width, 8/100 * height)
-		ctx2.lineTo(95.25/100 * width, 8/100 * height)
-		ctx2.lineTo(95/100 * width, 0)
+		let arrowWidth = 0.75/100 * width,
+			arrowHeight = 5/100 * height
+		ctx2.beginPath()
+		ctx2.moveTo(90/100 * width, 10/100 * height)
+		ctx2.lineTo(90/100 * width - arrowWidth / 2, 10/100 * height + arrowHeight)
+		ctx2.lineTo(90/100 * width + arrowWidth / 2, 10/100 * height + arrowHeight)
+		ctx2.lineTo(90/100 * width, 10/100 * height)
 		ctx2.fill()
 		ctx2.closePath()
+		
+		// Horizontal arrow
+		ctx2.beginPath()
+		ctx2.moveTo(91/100 * width + arrowHeight, height / 2)
+		ctx2.lineTo(91/100 * width, height / 2 - arrowWidth / 2)
+		ctx2.lineTo(91/100 * width, height / 2 + arrowWidth / 2)
+		ctx2.lineTo(91/100 * width + arrowHeight, height / 2)
+		ctx2.fill()
+		ctx2.closePath()
+		
+		// Axes names
+		ctx2.fillText("Amplitude", 90/100 * width, 6/100 * height) 
+		ctx2.fillText("Time", 95/100 * width, height / 2 + 4/100 * height) 
+	}
+	let drawGrid = () => {
+		let verti = 20,
+			hori = 6
+			
+		// Vertical lines
+		let vStep = 1 / verti * 80/100 * width
+		for (let v = 0; v <= verti; v++) {
+			ctx3.beginPath()
+			let x = 10/100 * width + v * vStep
+			ctx3.moveTo(x, 10/100 * height)
+			ctx3.lineTo(x, 90/100 * height)
+			ctx3.stroke()
+			ctx3.closePath()
+		}
+		
+		// Horizontal lines
+		let hStep = 1 / hori * 80/100 * height
+		for (let h = 0; h <= hori; h++) {
+			ctx3.beginPath()
+			let y = 10/100 * height + h * hStep
+			ctx3.moveTo(10/100 * width, y)
+			ctx3.lineTo(90/100 * width, y)
+			ctx3.stroke()
+			ctx3.closePath()
+		}
+		
+		// Scales in the corner
+		ctx3.moveTo(5/100 * width, 97/100 * height)
+		ctx3.lineTo(5/100 * width + vStep, 97/100 * height)
+		ctx3.stroke()
+		ctx3.moveTo(5/100 * width, 97/100 * height)
+		ctx3.lineTo(5/100 * width, 97/100 * height - hStep)
+		ctx3.stroke()
+		ctx3.fillText("50%", 3/100 * width, 91.5/100 * height)
+		ctx3.fillText("200ms", 7/100 * width, 100/100 * height)
 	}
 	
 	// Canvas time loop
@@ -92,18 +159,29 @@ let initOscilloscopeView = () => {
 		if (!C.axisToggle && axesAreDrawn) {
 			ctx2.clearRect(0, 0, width, height)
 			axesAreDrawn = false
-		} else if (C.axisToggle & !axesAreDrawn) {
+		} else if (C.axisToggle && !axesAreDrawn) {
 			drawAxes()
 			axesAreDrawn = true
 		}
 		
+		// Maybe clear of draw grid
+		if (!C.gridToggle && gridIsDrawn) {
+			ctx3.clearRect(0, 0, width, height)
+			gridIsDrawn = false
+		} else if (C.gridToggle && !gridIsDrawn) {
+			drawGrid()
+			gridIsDrawn = true
+		}
+		
 		// Draw curve
 		ctx1.beginPath()
-		let step = (axesAreDrawn ? 90/100 : 100/100) * width / F.timuDataArray.length
+		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
 		for (let i = 0; i < F.timuDataArray.length; i++) {
-			let x = (axesAreDrawn ? 5/100 * width : 0) + i * step
+			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 			let yCore = height - height * F.timuDataArray[i] / 255
-			let y = axesAreDrawn ? height / 2 + 80/100 * (yCore - height / 2) : yCore 
+			
+			// Signal can range up to max 53% of graph height
+			let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore 
 			
 			if (i == 0) {
 				ctx1.moveTo(x, y)
