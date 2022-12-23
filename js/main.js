@@ -20,6 +20,7 @@ let F = {
 }
 const log = console.log
 const dom = {
+	body: document.getElementsByTagName('body')[0],
 	main: document.getElementsByTagName('main')[0],
 	navTabs: document.getElementsByClassName('tab'),
 	audioStartButton: document.getElementsByClassName('audio-start')[0],
@@ -36,6 +37,10 @@ const dom = {
 	}
 }
 
+let loadView = (newViewNode) => {
+	dom.body.append(dom.main.firstElementChild)
+	dom.main.appendChild(newViewNode)
+}
 let initOscilloscopeView = () => {
 	
 	// Canvas setup
@@ -585,13 +590,13 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	}
 	
 	document.getElementById('home').addEventListener('click', (ev) => {
-		dom.main.innerHTML = dom.templates.home.innerHTML
+		loadView(dom.templates.home)
 		resetActivatedTab()
 		setActiveTab(ev.target)
 	})
 	
 	document.getElementById('oscilloscope').addEventListener('click', (ev) => {
-		dom.main.innerHTML = dom.templates.oscilloscope.innerHTML
+		loadView(dom.templates.oscilloscope)
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -599,7 +604,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	})
 	
 	document.getElementById('fft').addEventListener('click', (ev) => {
-		dom.main.innerHTML = dom.templates.fft.innerHTML
+		loadView(dom.templates.fft)
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -607,7 +612,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	})
 	
 	document.getElementById('timefreq').addEventListener('click', (ev) => {
-		dom.main.innerHTML = dom.templates.timefreq.innerHTML
+		loadView(dom.templates.timefreq)
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -615,7 +620,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	})
 	
 	document.getElementById('combined').addEventListener('click', (ev) => {
-		dom.main.innerHTML = dom.templates.combined.innerHTML
+		loadView(dom.templates.combined)
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -623,7 +628,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	})
 	
 	// Init on #home view
-	dom.main.innerHTML = dom.templates.home.innerHTML
+	loadView(dom.templates.home)
 	setActiveTab(document.getElementById('home'))
 	
 })

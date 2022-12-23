@@ -12,6 +12,7 @@ let C = {
 }
 
 document.addEventListener("DOMContentLoaded", (ev) => {
+	
 	document.addEventListener("keyup", (event) => {
 		
 		let toggledVariable

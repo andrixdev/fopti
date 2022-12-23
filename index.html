@@ -26,21 +26,23 @@
 		</nav>
 		
 		<main>
-			<div class="loader-container">
-				<div class="loader"></div>
-			</div>
+			<section id="loader-container" class="template">
+				<div id="loader-content">
+					<div class="loader"></div>
+				</div>
+			<section>
 		</main>
 		
-		<template id="home-template">
+		<section id="home-template" class="template">
 			<div id="home-container" class="container">
 				<h1>F⌀PTI</h1>
 				<p><em>Enhanced Michelson interferometer for a sensory understanding of gravitational wave detectors</em></p>
 				<br/>
 				<p>Projet funded by <a href="https://rop.cnrs.fr/" target="_blank">Réseau Optique et Photonique, CNRS</a></p>
 			</div>
-		</template>
+		</section>
 		
-		<template id="oscilloscope-template">
+		<section id="oscilloscope-template" class="template">
 			<div id="oscilloscope-container" class="container">
 			
 				<div class="canvas-container">
@@ -67,27 +69,27 @@
 				</div>
 				
 			</div>
-		</template>
+		</section>
 		
-		<template id="fft-template">
+		<section id="fft-template" class="template">
 			<div id="fft-container" class="container">
 				<div class="canvas-container">
 					<canvas id="fft-canvas"></canvas>
 				</div>
 				<div class="controls"></div>
 			</div>
-		</template>
+		</section>
 		
-		<template id="timefreq-template">
+		<section id="timefreq-template" class="template">
 			<div id="timefreq-container" class="container">
 				<div class="canvas-container">
 					<canvas id="timefreq-canvas"></canvas>
 				</div>
 				<div class="controls"></div>
 			</div>
-		</template>
+		</section>
 		
-		<template id="combined-template">
+		<section id="combined-template" class="template">
 			<div id="combined-container" class="container">
 				<div class="canvas-container">
 					<canvas id="combined-timefreq-canvas"></canvas>
@@ -95,7 +97,7 @@
 				</div>
 				<div class="controls"></div>
 			</div>
-		</template>
+		</section>
 		
 		<script src="js/controls.js"></script>
 		<script src="js/main.js"></script>

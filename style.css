@@ -87,6 +87,14 @@ nav #audio-buttons button.oscillator-start {
 	width: 50%;
 }
 
+section.template {
+	display: none;
+	height: 100%;
+}
+main section.template {
+	display: inherit;
+}
+
 .container {
 	position: relative;
 	height: 100%;
@@ -155,14 +163,14 @@ nav #audio-buttons button.oscillator-start {
 }
 
 /* Specific */
-.loader-container {
+#loader-content {
 	height: 100%;
 	width: 100%;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
-.loader-container .loader {
+#loader-content .loader {
 	background: white;
 	height: 30px;
 	width: 30px;
