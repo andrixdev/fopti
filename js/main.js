@@ -41,6 +41,56 @@ let loadView = (newViewNode) => {
 	dom.body.append(dom.main.firstElementChild)
 	dom.main.appendChild(newViewNode)
 }
+let resetActivatedTab = () => {
+	Array.from(document.getElementsByClassName('tab')).forEach((el) => {
+		el.classList = 'tab'
+	})
+}
+let setActiveTab = (node) => {
+	node.classList = 'tab active'
+}
+let initNavAndViewMechanics = () => {
+	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
+	
+	document.getElementById('home').addEventListener('click', (ev) => {
+		loadView(dom.templates.home)
+		resetActivatedTab()
+		setActiveTab(ev.target)
+	})
+	
+	document.getElementById('oscilloscope').addEventListener('click', (ev) => {
+		loadView(dom.templates.oscilloscope)
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initOscilloscopeView()
+	})
+	
+	document.getElementById('fft').addEventListener('click', (ev) => {
+		loadView(dom.templates.fft)
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initFFTView()
+	})
+	
+	document.getElementById('timefreq').addEventListener('click', (ev) => {
+		loadView(dom.templates.timefreq)
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initTimefreqView()
+	})
+	
+	document.getElementById('combined').addEventListener('click', (ev) => {
+		loadView(dom.templates.combined)
+		resetActivatedTab()
+		setActiveTab(ev.target)
+		
+		initCombinedView()
+	})
+}
+
 let initOscilloscopeView = () => {
 	
 	// Canvas setup
@@ -116,7 +166,7 @@ let initOscilloscopeView = () => {
 		ctx2.fillText("Time", 95/100 * width, height / 2 + 4/100 * height) 
 	}
 	let drawGrid = () => {
-		let verti = 20,
+		let verti = 21,
 			hori = 6
 			
 		// Vertical lines
@@ -142,6 +192,7 @@ let initOscilloscopeView = () => {
 		}
 		
 		// Scales in the corner
+		// -> whole X range corresponds to 21.28 ms
 		ctx3.moveTo(5/100 * width, 97/100 * height)
 		ctx3.lineTo(5/100 * width + vStep, 97/100 * height)
 		ctx3.stroke()
@@ -149,7 +200,7 @@ let initOscilloscopeView = () => {
 		ctx3.lineTo(5/100 * width, 97/100 * height - hStep)
 		ctx3.stroke()
 		ctx3.fillText("50%", 3/100 * width, 91.5/100 * height)
-		ctx3.fillText("200ms", 7/100 * width, 100/100 * height)
+		ctx3.fillText("1 ms", 7/100 * width, 100/100 * height)
 	}
 	
 	// Canvas time loop
@@ -181,7 +232,7 @@ let initOscilloscopeView = () => {
 		// Draw curve
 		ctx1.beginPath()
 		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-		for (let i = 0; i < F.timuDataArray.length; i++) {
+		for (let i = 0; i < F.timuDataArray.length; i += 5) {
 			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 			let yCore = height - height * F.timuDataArray[i] / 255
 			
@@ -460,7 +511,10 @@ let startAudio = () => {
 	F.timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
-	// Start oscillator (without hearing or analysing it yet)
+	// Calibrate reactivity (more or less averaged with previous value), 0.8 is default, 0 is not averaged and thus super reactive, and 1 the maximum
+	F.analyser.smoothingTimeConstant = 0
+	
+	// Start oscillator
 	if (!F.isOscillatorOn) {
 		F.osci.start()
 		F.isOscillatorOn = true
@@ -579,53 +633,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		stopOscillator()
 	})
 	
-	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
-	let resetActivatedTab = () => {
-		Array.from(document.getElementsByClassName('tab')).forEach((el) => {
-			el.classList = 'tab'
-		})
-	}
-	let setActiveTab = (node) => {
-		node.classList = 'tab active'
-	}
-	
-	document.getElementById('home').addEventListener('click', (ev) => {
-		loadView(dom.templates.home)
-		resetActivatedTab()
-		setActiveTab(ev.target)
-	})
-	
-	document.getElementById('oscilloscope').addEventListener('click', (ev) => {
-		loadView(dom.templates.oscilloscope)
-		resetActivatedTab()
-		setActiveTab(ev.target)
-		
-		initOscilloscopeView()
-	})
-	
-	document.getElementById('fft').addEventListener('click', (ev) => {
-		loadView(dom.templates.fft)
-		resetActivatedTab()
-		setActiveTab(ev.target)
-		
-		initFFTView()
-	})
-	
-	document.getElementById('timefreq').addEventListener('click', (ev) => {
-		loadView(dom.templates.timefreq)
-		resetActivatedTab()
-		setActiveTab(ev.target)
-		
-		initTimefreqView()
-	})
-	
-	document.getElementById('combined').addEventListener('click', (ev) => {
-		loadView(dom.templates.combined)
-		resetActivatedTab()
-		setActiveTab(ev.target)
-		
-		initCombinedView()
-	})
+	initNavAndViewMechanics()
 	
 	// Init on #home view
 	loadView(dom.templates.home)
