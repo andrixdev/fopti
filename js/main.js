@@ -11,6 +11,7 @@ let F = {
 	osci: undefined,
 	mike: undefined,
 	analyser: undefined,
+	gain: undefined,
 	timuDataArray: [],
 	frequDataArray: [],
 	isMikeOn: false,
@@ -23,11 +24,15 @@ const dom = {
 	body: document.getElementsByTagName('body')[0],
 	main: document.getElementsByTagName('main')[0],
 	navTabs: document.getElementsByClassName('tab'),
-	audioStartButton: document.getElementsByClassName('audio-start')[0],
-	mikeStartButton: document.getElementsByClassName('mike-start')[0],
-	mikeStopButton: document.getElementsByClassName('mike-stop')[0],
-	oscillatorStartButton: document.getElementsByClassName('oscillator-start')[0],
-	oscillatorStopButton: document.getElementsByClassName('oscillator-stop')[0],
+	buttons: {
+		audioStart: document.getElementsByClassName('audio-start')[0],
+		mikeStart: document.getElementsByClassName('mike-start')[0],
+		mikeStop: document.getElementsByClassName('mike-stop')[0],
+		oscillatorStart: document.getElementsByClassName('oscillator-start')[0],
+		oscillatorStop: document.getElementsByClassName('oscillator-stop')[0],
+		audioMute: document.getElementsByClassName('audio-mute')[0],
+		audioUnmute: document.getElementsByClassName('audio-unmute')[0]
+	},
 	templates: {
 		home: document.getElementById('home-template'),
 		oscilloscope: document.getElementById('oscilloscope-template'),
@@ -507,6 +512,10 @@ let startAudio = () => {
 		type: "sine" // "sine", "square", "sawtooth", "triangle"
 	})
 	
+	// Create gain node
+	F.gain = new GainNode(F.audioContext)
+	F.gain.gain.value = 1
+	
 	// Create audio analyzer
 	F.analyser = new AnalyserNode(F.audioContext) // Created with FFT size of 2048 (2^11)
 	const bufferLength = F.analyser.frequencyBinCount // 1024
@@ -539,9 +548,11 @@ let startAudio = () => {
 	
 }
 let startOscillator = () => {
+	F.gain.gain.value = 1
 	
-	// Link oscillator to audio context destination (for hearing)
-	F.osci.connect(F.audioContext.destination)
+	// Link oscillator to audio context destination (for hearing) with a gain node inbetween them
+	F.osci.connect(F.gain)
+	F.gain.connect(F.audioContext.destination)
 	
 	// Don't forget to connect it with analyser!
 	F.osci.connect(F.analyser)
@@ -561,9 +572,11 @@ let startMicrophone = () => {
 		})
 		.then((stream) => {
 			F.isMikeOn = true
+			F.gain.gain.value = 1
 			F.mike = F.audioContext.createMediaStreamSource(stream)
-			// Link to destination for hearing
-			F.mike.connect(F.audioContext.destination)
+			// Link to destination for hearing (with gain inbetween)
+			F.mike.connect(F.gain)
+			F.gain.connect(F.audioContext.destination)
 			// Connect it with analyser!
 			F.mike.connect(F.analyser)
 		})
@@ -575,24 +588,26 @@ let startMicrophone = () => {
 	}
 }
 let stopOscillator = () => {
-	// Don't kill the adio node but just disconnect from analyser and output
+	// Don't kill the audio nodes but just disconnect from analyser and output
 	F.osci.disconnect(F.analyser)
-	F.osci.disconnect(F.audioContext.destination)
+	F.osci.disconnect(F.gain)
+	F.gain.disconnect(F.audioContext.destination)
 }
 let stopMicrophone = () => {
-	// Don't kill the adio node but just disconnect from analyser and output
-	F.mike.disconnect(F.audioContext.destination)
+	// Don't kill the audio nodes but just disconnect from analyser and output
 	F.mike.disconnect(F.analyser)
+	F.mike.disconnect(F.gain)
+	F.gain.disconnect(F.audioContext.destination)
 }
 
 document.addEventListener("DOMContentLoaded", (ev) => {
 	
 	// Audio buttons 
-	dom.audioStartButton.addEventListener('click', () => {
+	dom.buttons.audioStart.addEventListener('click', () => {
 		// Display the other buttons
-		dom.audioStartButton.classList.add('hidden')
-		dom.mikeStartButton.classList.remove('hidden')
-		dom.oscillatorStartButton.classList.remove('hidden')
+		dom.buttons.audioStart.classList.add('hidden')
+		dom.buttons.mikeStart.classList.remove('hidden')
+		dom.buttons.oscillatorStart.classList.remove('hidden')
 		
 		// Display the other tabs
 		Array.from(dom.navTabs).forEach((el) => {
@@ -602,37 +617,67 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		// Do some global audio init
 		startAudio()
 	})
-	dom.mikeStartButton.addEventListener('click', () => {
+	dom.buttons.mikeStart.addEventListener('click', () => {
 		// Toggle start/stop button hidden status
-		dom.mikeStopButton.classList.remove('hidden')
-		dom.mikeStartButton.classList.add('hidden')
-		dom.oscillatorStartButton.classList.add('hidden')
+		//dom.buttons.mikeStop.classList.remove('hidden')
+		dom.buttons.mikeStart.classList.add('hidden')
+		dom.buttons.oscillatorStart.classList.add('hidden')
 		
 		startMicrophone()
+		
+		// Show mute button
+		dom.buttons.audioMute.classList.remove('hidden')
 	})
-	dom.oscillatorStartButton.addEventListener('click', () => {
+	dom.buttons.oscillatorStart.addEventListener('click', () => {
 		// Toggle start/stop button hidden status
-		dom.oscillatorStopButton.classList.remove('hidden')
-		dom.oscillatorStartButton.classList.add('hidden')
-		dom.mikeStartButton.classList.add('hidden')
+		dom.buttons.oscillatorStop.classList.remove('hidden')
+		dom.buttons.oscillatorStart.classList.add('hidden')
+		dom.buttons.mikeStart.classList.add('hidden')
 		
 		startOscillator()
+		
+		// Show mute button
+		dom.buttons.audioMute.classList.remove('hidden')
 	})
-	dom.mikeStopButton.addEventListener('click', () => {
+	/*
+	dom.buttons.mikeStop.addEventListener('click', () => {
 		// Toggle start/stop button hidden status
-		dom.mikeStopButton.classList.add('hidden')
-		dom.mikeStartButton.classList.remove('hidden')
-		dom.oscillatorStartButton.classList.remove('hidden')
+		dom.buttons.mikeStop.classList.add('hidden')
+		dom.buttons.mikeStart.classList.remove('hidden')
+		dom.buttons.oscillatorStart.classList.remove('hidden')
 		
 		stopMicrophone()
+		
+		// Show hide mute&unmute button
+		dom.buttons.audioMute.classList.add('hidden')
+		dom.buttons.audioUnmute.classList.add('hidden')
 	})
-	dom.oscillatorStopButton.addEventListener('click', () => {
+	*/
+	dom.buttons.oscillatorStop.addEventListener('click', () => {
 		// Toggle start/stop button hidden status
-		dom.oscillatorStopButton.classList.add('hidden')
-		dom.oscillatorStartButton.classList.remove('hidden')
-		dom.mikeStartButton.classList.remove('hidden')
+		dom.buttons.oscillatorStop.classList.add('hidden')
+		dom.buttons.oscillatorStart.classList.remove('hidden')
+		dom.buttons.mikeStart.classList.remove('hidden')
 		
 		stopOscillator()
+		
+		// Hide mute&unmute buttons
+		dom.buttons.audioMute.classList.add('hidden')
+		dom.buttons.audioUnmute.classList.add('hidden')
+	})
+	dom.buttons.audioMute.addEventListener('click', () => {
+		F.gain.gain.value = 0
+		
+		// Toggle mute/unmute .hidden status
+		dom.buttons.audioMute.classList.add('hidden')
+		dom.buttons.audioUnmute.classList.remove('hidden')
+	})
+	dom.buttons.audioUnmute.addEventListener('click', () => {
+		F.gain.gain.value = 1
+		
+		// Toggle mute/unmute .hidden status
+		dom.buttons.audioUnmute.classList.add('hidden')
+		dom.buttons.audioMute.classList.remove('hidden')
 	})
 	
 	initNavAndViewMechanics()

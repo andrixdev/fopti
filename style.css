@@ -82,10 +82,6 @@ nav #audio-buttons button.hidden {
 nav #audio-buttons button.audio-start {
 	width: 100%;
 }
-nav #audio-buttons button.mike-start,
-nav #audio-buttons button.oscillator-start {
-	width: 50%;
-}
 
 section.template {
 	display: none;
