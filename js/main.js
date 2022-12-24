@@ -232,7 +232,9 @@ let initOscilloscopeView = () => {
 		// Draw curve
 		ctx1.beginPath()
 		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-		for (let i = 0; i < F.timuDataArray.length; i += 5) {
+		// There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
+		let increment = C.precisionToggle ? 1 : 10
+		for (let i = 0; i < F.timuDataArray.length; i += increment) {
 			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 			let yCore = height - height * F.timuDataArray[i] / 255
 			

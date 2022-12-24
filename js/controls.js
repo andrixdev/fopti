@@ -8,6 +8,7 @@
 let C = {
 	axisToggle: false,
 	gridToggle: false,
+	precisionToggle: false,
 	loglogToggle: false
 }
 
@@ -29,6 +30,13 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 			// Toggle global control variable
 			C.gridToggle = !C.gridToggle
 			toggledVariable = C.gridToggle
+		}
+		
+		// 'P' key
+		if (event.keyCode == 80) {
+			// Toggle global control variable
+			C.precisionToggle = !C.precisionToggle
+			toggledVariable = C.precisionToggle
 		}
 		
 		// 'L' key
