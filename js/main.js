@@ -16,8 +16,9 @@ let F = {
 	frequDataArray: [],
 	isMikeOn: false,
 	isOscillatorOn: false,
-	ctx3TimerStart: undefined,
-	ctx4TimerStart: undefined
+	timefreqCtxTimerStart: undefined,
+	combinedCtxTimerStart: undefined,
+	activeView: 'home'
 }
 const log = console.log
 const dom = {
@@ -42,9 +43,26 @@ const dom = {
 	}
 }
 
-let loadView = (newViewNode) => {
+let loadView = (newViewName) => {
+	let newViewNode
+	if (newViewName == 'home') {
+		newViewNode = dom.templates.home
+	} else if (newViewName == 'oscilloscope') {
+		newViewNode = dom.templates.oscilloscope
+	} else if (newViewName == 'fft') {
+		newViewNode = dom.templates.fft
+	} else if (newViewName == 'timefreq') {
+		newViewNode = dom.templates.timefreq
+	} else if (newViewName == 'combined') {
+		newViewNode = dom.templates.combined
+	} else {
+		log("New view name is unknown in loadView()")
+	}
+	
 	dom.body.append(dom.main.firstElementChild)
 	dom.main.appendChild(newViewNode)
+	
+	F.activeView = newViewName
 }
 let resetActivatedTab = () => {
 	Array.from(document.getElementsByClassName('tab')).forEach((el) => {
@@ -58,13 +76,13 @@ let initNavAndViewMechanics = () => {
 	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
 	
 	document.getElementById('home').addEventListener('click', (ev) => {
-		loadView(dom.templates.home)
+		loadView('home')
 		resetActivatedTab()
 		setActiveTab(ev.target)
 	})
 	
 	document.getElementById('oscilloscope').addEventListener('click', (ev) => {
-		loadView(dom.templates.oscilloscope)
+		loadView('oscilloscope')
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -72,7 +90,7 @@ let initNavAndViewMechanics = () => {
 	})
 	
 	document.getElementById('fft').addEventListener('click', (ev) => {
-		loadView(dom.templates.fft)
+		loadView('fft')
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -80,7 +98,7 @@ let initNavAndViewMechanics = () => {
 	})
 	
 	document.getElementById('timefreq').addEventListener('click', (ev) => {
-		loadView(dom.templates.timefreq)
+		loadView('timefreq')
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -88,7 +106,7 @@ let initNavAndViewMechanics = () => {
 	})
 	
 	document.getElementById('combined').addEventListener('click', (ev) => {
-		loadView(dom.templates.combined)
+		loadView('combined')
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
@@ -263,85 +281,88 @@ let initOscilloscopeView = () => {
 }
 let initFFTView = () => {
 	// Canvas setup
-	let ctx2 = document.getElementById('fft-canvas').getContext('2d')
-	let container2 = document.getElementById('fft-container'),
-		width2 = container2.clientWidth,
-		height2 = Math.min(container2.clientHeight, 400)
+	let ctx1 = document.getElementById('fft-canvas').getContext('2d')
+	let container = document.getElementById('fft-container'),
+		width = container.clientWidth,
+		height = Math.min(container.clientHeight, 400)
 		
-	ctx2.canvas.width = width2
-	ctx2.canvas.height = height2
+	ctx1.canvas.width = width
+	ctx1.canvas.height = height
 	
-	ctx2.lineWidth = 1
-	ctx2.strokeStyle = 'white'
+	ctx1.lineWidth = 1
+	ctx1.strokeStyle = 'white'
 	
 	// Canvas time loop
 	let frame = 0
-	let loop2 = () => {
+	let loop = () => {
 		frame++
 		
-		ctx2.clearRect(0, 0, width2, height2)
-		ctx2.beginPath()
+		ctx1.clearRect(0, 0, width, height)
+		ctx1.beginPath()
 		
-		let step = width2 / F.frequDataArray.length
-		for (let i = 0; i < F.frequDataArray.length; i++) {
+		let step = width / F.frequDataArray.length
+		let increment = C.precisionToggle ? 1 : 5
+		for (let i = 0; i < F.frequDataArray.length; i += increment) {
+			let x = i * step
+			let y = height - height * F.frequDataArray[i] / 255
 			if (i == 0) {
-				ctx2.moveTo(i * step, height2 - height2 * F.frequDataArray[i] / 255)
+				ctx1.moveTo(x, y)
 			} else {
-				ctx2.lineTo(i * step, height2 - height2 * F.frequDataArray[i] / 255)
+				ctx1.lineTo(x, y)
 			}
 		}
 		
-		ctx2.stroke()
-		ctx2.closePath()
+		ctx1.stroke()
+		ctx1.closePath()
 		
-		window.requestAnimationFrame(loop2)
+		window.requestAnimationFrame(loop)
 	}
-	window.requestAnimationFrame(loop2)
+	window.requestAnimationFrame(loop)
 }
 let initTimefreqView = () => {
 	// Canvas setup
-	let ctx3 = document.getElementById('timefreq-canvas').getContext('2d')
-	let container3 = document.getElementById('timefreq-container'),
-		width3 = container3.clientWidth,
-		height3 = Math.min(container3.clientHeight, 400)
+	let ctx1 = document.getElementById('timefreq-canvas').getContext('2d')
+	let container = document.getElementById('timefreq-container'),
+		width = container.clientWidth,
+		height = Math.min(container.clientHeight, 400)
 		
-	ctx3.canvas.width = width3
-	ctx3.canvas.height = height3
-	ctx3.globalCompositeOperation = 'lighter'
-	//ctx3.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
+	ctx1.canvas.width = width
+	ctx1.canvas.height = height
+	ctx1.globalCompositeOperation = 'lighter'
+	//ctx1.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
 	// Canvas background
-	ctx3.fillStyle = 'black'
-	ctx3.fillRect(0, 0, width3, height3)
+	ctx1.fillStyle = 'black'
+	ctx1.fillRect(0, 0, width, height)
 	
 	// Canvas time loop
-	F.ctx3TimerStart = new Date().getTime()
+	F.timefreqCtxTimerStart = new Date().getTime()
 	let frame = 0,
 		lastX = 0,
 		X = 0,
-		time = F.ctx3TimerStart,
+		time = F.timefreqCtxTimerStart,
 		radarMS = 4000, // ms
 		sections = 50,
-		zoneHeight = height3 / sections
+		zoneHeight = height / sections
 		
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
 		
-	let loop3 = () => {
+	let loop = () => {
 		frame++
 		let newTime = new Date().getTime()
 		
 		// Radar over X axis
-		X = width3 * ((newTime - F.ctx3TimerStart) % radarMS) / radarMS
+		X = width * ((newTime - F.timefreqCtxTimerStart) % radarMS) / radarMS
 		
 		// Paint wider rectangles if refresh time is longer
-		let thickness = width3 * (newTime - time) / radarMS
+		let thickness = width * (newTime - time) / radarMS
 		
 		/*
-		ctx3.beginPath()
-		ctx3.fillStyle = 'black'
-		ctx3.clearRect(X - thickness, 0, thickness, height3)
-		ctx3.closePath()
+		ctx1.beginPath()
+		ctx1.fillStyle = 'black'
+		ctx1.clearRect(X - thickness, 0, thickness, height)
+		ctx1.closePath()
 		*/
 		
 		for (let s = 0; s < sections; s++) {
@@ -350,7 +371,7 @@ let initTimefreqView = () => {
 			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
 			
 			// Position of colored zone
-			let y = height3 - height3 * s / sections
+			let y = height - height * s / sections
 			
 			// Colors
 			let hue = 260 - sampleValue / 255 * 60
@@ -358,69 +379,69 @@ let initTimefreqView = () => {
 			let alpha = sampleValue / 255 * 0.7
 			
 			// Clear previous (not painting black because of composite 'lighter' mode)
-			ctx3.clearRect(X - thickness, y, thickness, zoneHeight)
+			ctx1.clearRect(X - thickness, y, thickness, zoneHeight)
 			
 			// Fill!
-			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-			ctx3.fillRect(X - thickness, y, thickness, zoneHeight)
+			ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+			ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
 			
 			// Draw a shadow circle around
-			ctx3.beginPath()
+			ctx1.beginPath()
 			let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
 			radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
 			
-			ctx3.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
-			ctx3.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
-			ctx3.fill()
-			ctx3.closePath()
+			ctx1.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
+			ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
+			ctx1.fill()
+			ctx1.closePath()
 		}
 		
 		lastX = X
 		time = newTime
 		
-		window.requestAnimationFrame(loop3)
+		window.requestAnimationFrame(loop)
 	}
-	window.requestAnimationFrame(loop3)
+	window.requestAnimationFrame(loop)
 }
 let initCombinedView = () => {
-	let container4 = document.getElementById('combined-container')
+	let container = document.getElementById('combined-container')
 	
 	// First canvas setup (radial timefreq)
-	let ctx4 = document.getElementById('combined-timefreq-canvas').getContext('2d'),
-		width4 = container4.clientWidth,
-		height4 = Math.min(container4.clientHeight, 600)
+	let ctx1 = document.getElementById('combined-timefreq-canvas').getContext('2d'),
+		width1 = container.clientWidth,
+		height1 = Math.min(container.clientHeight, 600)
 		
-	ctx4.canvas.width = width4
-	ctx4.canvas.height = height4
-	ctx4.imageSmoothingEnabled = true
+	ctx1.canvas.width = width1
+	ctx1.canvas.height = height1
+	ctx1.imageSmoothingEnabled = true
 	
 	// Canvas background
-	ctx4.fillStyle = 'black'
-	ctx4.fillRect(0, 0, width4, height4)
+	ctx1.fillStyle = 'black'
+	ctx1.fillRect(0, 0, width1, height1)
 	
 	// Canvas time loop
-	F.ctx4TimerStart = new Date().getTime()
-	let frame4 = 0,
+	F.combinedCtxTimerStart = new Date().getTime()
+	let frame1 = 0,
 		lastTheta = 0,
 		theta = 0,
-		time = F.ctx4TimerStart,
+		time = F.combinedCtxTimerStart,
 		radarMS = 5000, // ms
 		sections = 50,
 		baseRadius = 100,
 		maxRadius = 400,
 		zoneHeight = (maxRadius - baseRadius) / sections,
-		centerX = width4 / 2,
-		centerY = height4 / 2
+		centerX = width1 / 2,
+		centerY = height1 / 2
 	
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
 		
-	let loop4 = () => {
-		frame4++
+	let loop1 = () => {
+		frame1++
 		let newTime = new Date().getTime()
 		
 		// Radar over Theta
-		theta = 2 * Math.PI * ((newTime - F.ctx4TimerStart) % radarMS) / radarMS
+		theta = 2 * Math.PI * ((newTime - F.combinedCtxTimerStart) % radarMS) / radarMS
 		
 		// Paint wider arcs (in theta) if refresh time is longer
 		let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
@@ -438,67 +459,67 @@ let initCombinedView = () => {
 			let alpha = sampleValue / 255 * 0.7
 			
 			// Draw new arc
-			ctx4.beginPath()
-			ctx4.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-			ctx4.lineWidth = zoneHeight
-			ctx4.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
-			ctx4.stroke()
-			ctx4.closePath()
+			ctx1.beginPath()
+			ctx1.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+			ctx1.lineWidth = zoneHeight
+			ctx1.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
+			ctx1.stroke()
+			ctx1.closePath()
 		}
 		
 		lastTheta = theta
 		time = newTime
 		
-		window.requestAnimationFrame(loop4)
+		window.requestAnimationFrame(loop1)
 	}
-	window.requestAnimationFrame(loop4)
+	window.requestAnimationFrame(loop1)
 	
-	// Central circle to host oscilloscope canvas (ctx5)
-	ctx4.beginPath()
-	ctx4.strokeStyle = 'white'
-	ctx4.lineWidth = 4
-	ctx4.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
-	ctx4.stroke()
-	ctx4.closePath()
+	// Central circle to host oscilloscope canvas
+	ctx1.beginPath()
+	ctx1.strokeStyle = 'white'
+	ctx1.lineWidth = 4
+	ctx1.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
+	ctx1.stroke()
+	ctx1.closePath()
 	
 	// Second canvas setup (oscilloscope)
-	let ctx5 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
-	let width5 = 200,
-		height5 = 200
+	let ctx2 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
+	let width2 = 200,
+		height2 = 200
 		
-	ctx5.canvas.width = width5
-	ctx5.canvas.height = height5
+	ctx2.canvas.width = width2
+	ctx2.canvas.height = height2
 	
-	ctx5.lineWidth = 1
-	ctx5.strokeStyle = 'white'
+	ctx2.lineWidth = 1
+	ctx2.strokeStyle = 'white'
 	
 	// Canvas time loop
-	let frame5 = 0
-	let loop5 = () => {
-		frame5++
+	let frame2 = 0
+	let loop2 = () => {
+		frame2++
 		
-		ctx5.clearRect(0, 0, width5, height5)
-		ctx5.beginPath()
+		ctx2.clearRect(0, 0, width2, height2)
+		ctx2.beginPath()
 		
 		let l = F.timuDataArray.length,
-			step = width5 / l
+			step = width2 / l
 		for (let i = 0; i < F.timuDataArray.length; i += 5) {
-			let y = height5 * (255 - F.timuDataArray[i]) / 255
-			y = height5 / 2 + 0.8 * (y - height5 / 2) * Math.pow(Math.sin(Math.PI * i / l), 2)
+			let y = height2 * (255 - F.timuDataArray[i]) / 255
+			y = height2 / 2 + 0.8 * (y - height2 / 2) * Math.pow(Math.sin(Math.PI * i / l), 2)
 
 			if (i == 0) {
-				ctx5.moveTo(0, y)
+				ctx2.moveTo(0, y)
 			} else {
-				ctx5.lineTo(i * step, y)
+				ctx2.lineTo(i * step, y)
 			}
 			
 		}
 		
-		ctx5.stroke()
+		ctx2.stroke()
 		
-		window.requestAnimationFrame(loop5)
+		window.requestAnimationFrame(loop2)
 	}
-	window.requestAnimationFrame(loop5)
+	window.requestAnimationFrame(loop2)
 	
 }
 
@@ -683,7 +704,7 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 	initNavAndViewMechanics()
 	
 	// Init on #home view
-	loadView(dom.templates.home)
+	loadView('home')
 	setActiveTab(document.getElementById('home'))
 	
 })
