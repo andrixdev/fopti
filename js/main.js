@@ -162,7 +162,7 @@ let initOscilloscopeView = () => {
 			ctx2.clearRect(0, 0, width, height)
 			axesAreDrawn = false
 		} else if (C.axisToggle && !axesAreDrawn) {
-			drawAxes(ctx2, width, height, "Amplitude", "Time")
+			drawAxes('oscilloscope', ctx2, width, height)
 			axesAreDrawn = true
 		}
 		
@@ -171,7 +171,7 @@ let initOscilloscopeView = () => {
 			ctx3.clearRect(0, 0, width, height)
 			gridIsDrawn = false
 		} else if (C.gridToggle && !gridIsDrawn) {
-			drawGrid(ctx3, width, height, 21,6, "50%", "1 ms")
+			drawGrid('oscilloscope', ctx3, width, height, 21, 6)
 			gridIsDrawn = true
 		}
 		
@@ -182,9 +182,7 @@ let initOscilloscopeView = () => {
 		for (let i = 0; i < F.timuDataArray.length; i += increment) {
 			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 			let yCore = height - height * F.timuDataArray[i] / 255
-			
-			// Signal can range up to max 53% of graph height
-			let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore 
+			let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore // Signal can range up to max 53% of graph height
 			
 			if (i == 0) {
 				ctx1.moveTo(x, y)
@@ -249,7 +247,7 @@ let initFFTView = () => {
 			ctx2.clearRect(0, 0, width, height)
 			axesAreDrawn = false
 		} else if (C.axisToggle && !axesAreDrawn) {
-			drawAxes(ctx2, width, height, "dB", "Frequency")
+			drawAxes('fft', ctx2, width, height)
 			axesAreDrawn = true
 		}
 		
@@ -258,17 +256,19 @@ let initFFTView = () => {
 			ctx3.clearRect(0, 0, width, height)
 			gridIsDrawn = false
 		} else if (C.gridToggle && !gridIsDrawn) {
-			drawGrid(ctx3, width, height, 24, 10, "10 dB", "1 kHz")
+			drawGrid('fft', ctx3, width, height, 24, 10)
 			gridIsDrawn = true
 		}
 		
 		// Draw curve
 		ctx1.beginPath()
-		let step = width / F.frequDataArray.length
+		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
 		let increment = C.precisionToggle ? 1 : 5 // There are 1024 values to draw. We draw only 1/5 of them unless precision+ mode is active
 		for (let i = 0; i < F.frequDataArray.length; i += increment) {
-			let x = i * step
-			let y = height - height * F.frequDataArray[i] / 255
+			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
+			let y = (axesAreDrawn || gridIsDrawn) ?
+			(90/100 * height - 80/100 * height * F.frequDataArray[i] / 255) : (height - height * F.frequDataArray[i] / 255)
+			
 			if (i == 0) {
 				ctx1.moveTo(x, y)
 			} else {
@@ -486,24 +486,39 @@ let initCombinedView = () => {
 	window.requestAnimationFrame(loop2)
 	
 }
-let drawAxes = (ctx, width, height, axis1name, axis2name) => {
-	// Horizontal
+let drawAxes = (type, ctx, width, height) => {
+	// type can be 'oscilloscope', 'fft', 'timefreq' or 'combined'
+	
+	// Axes
+	let yHoriAxis = type == 'oscilloscope' ? height / 2 : 90/100 * height
+	// Horizontal axis
 	ctx.beginPath()
-	ctx.moveTo(10/100 * width, height / 2)
-	ctx.lineTo(92/100 * width, height / 2)
+	ctx.moveTo(10/100 * width, yHoriAxis)
+	ctx.lineTo(92/100 * width, yHoriAxis)
 	ctx.stroke()
 	ctx.closePath()
 	
-	// Vertical
+	// Vertical axis
 	ctx.beginPath()
 	ctx.moveTo(90/100 * width, 90/100 * height)
 	ctx.lineTo(90/100 * width, 15/100 * height)
 	ctx.stroke()
 	ctx.closePath()
 	
+	// Arrows
+	let arrowWidth = 0.75/100 * width
+	let arrowHeight = 5/100 * height
+	
+	// Horizontal arrow
+	ctx.beginPath()
+	ctx.moveTo(91/100 * width + arrowHeight, yHoriAxis)
+	ctx.lineTo(91/100 * width, yHoriAxis - arrowWidth / 2)
+	ctx.lineTo(91/100 * width, yHoriAxis + arrowWidth / 2)
+	ctx.lineTo(91/100 * width + arrowHeight, yHoriAxis)
+	ctx.fill()
+	ctx.closePath()
+	
 	// Vertical arrow
-	let arrowWidth = 0.75/100 * width,
-		arrowHeight = 5/100 * height
 	ctx.beginPath()
 	ctx.moveTo(90/100 * width, 10/100 * height)
 	ctx.lineTo(90/100 * width - arrowWidth / 2, 10/100 * height + arrowHeight)
@@ -512,20 +527,28 @@ let drawAxes = (ctx, width, height, axis1name, axis2name) => {
 	ctx.fill()
 	ctx.closePath()
 	
-	// Horizontal arrow
-	ctx.beginPath()
-	ctx.moveTo(91/100 * width + arrowHeight, height / 2)
-	ctx.lineTo(91/100 * width, height / 2 - arrowWidth / 2)
-	ctx.lineTo(91/100 * width, height / 2 + arrowWidth / 2)
-	ctx.lineTo(91/100 * width + arrowHeight, height / 2)
-	ctx.fill()
-	ctx.closePath()
-	
 	// Axes names
-	ctx.fillText(axis1name, 90/100 * width, 6/100 * height) 
-	ctx.fillText(axis2name, 95/100 * width, height / 2 + 4/100 * height) 
+	let axis1name, axis2name, text1x, text1y, text2x, text2y
+	if (type == 'oscilloscope') {
+		axis1name = "Amplitude"
+		axis2name = "Time"
+		text1x = 90/100 * width
+		text1y = 6/100 * height
+		text2x = 95/100 * width
+		text2y = height / 2 + 4/100 * height
+	} else if (type == 'fft') {
+		axis1name = "dB"
+		axis2name = "Frequency"
+		text1x = 90/100 * width
+		text1y = 6/100 * height
+		text2x = 92/100 * width
+		text2y = 95/100 * height
+	}
+	ctx.fillText(axis1name, text1x, text1y) 
+	ctx.fillText(axis2name, text2x, text2y)
 }
-let drawGrid = (ctx, width, height, vertiCuts, horiCuts, scale1text, scale2text) => {
+let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
+	// type can be 'oscilloscope', 'fft', 'timefreq' or 'combined'
 	
 	// Vertical lines
 	let vStep = 1 / vertiCuts * 80/100 * width
@@ -557,8 +580,25 @@ let drawGrid = (ctx, width, height, vertiCuts, horiCuts, scale1text, scale2text)
 	ctx.moveTo(5/100 * width, 97/100 * height)
 	ctx.lineTo(5/100 * width, 97/100 * height - hStep)
 	ctx.stroke()
-	ctx.fillText(scale1text, 3/100 * width, 91.5/100 * height)
-	ctx.fillText(scale2text, 7/100 * width, 100/100 * height)
+	
+	let scale1text, scale2text, text1x, text1y, text2x, text2y
+	if (type == 'oscilloscope') {
+		scale1text = "50%"
+		scale2text = "1 ms"
+		text1x = 3/100 * width
+		text1y = 91.5/100 * height
+		text2x = 7/100 * width
+		text2y = 100/100 * height
+	} else if (type == 'fft') {
+		scale1text = "10 dB"
+		scale2text = "1 kHz"
+		text1x = 3/100 * width
+		text1y = 91.5/100 * height
+		text2x = 7/100 * width
+		text2y = 100/100 * height
+	}
+	ctx.fillText(scale1text, text1x, text1y)
+	ctx.fillText(scale2text, text2x, text2y)
 }
 	
 let startAudio = () => {
