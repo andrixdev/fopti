@@ -115,16 +115,16 @@ let initNavAndViewMechanics = () => {
 }
 
 let initOscilloscopeView = () => {
-	
 	// Canvas setup
-	let ctx1 = document.getElementById('oscilloscope-curve-canvas').getContext('2d'),
-		ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d'),
-		ctx3 = document.getElementById('oscilloscope-grid-canvas').getContext('2d')
+	let ctx1 = document.getElementById('oscilloscope-curve-canvas').getContext('2d')
+	let ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d')
+	let ctx3 = document.getElementById('oscilloscope-grid-canvas').getContext('2d')
 		
-	let container = document.getElementById('oscilloscope-container'),
-		width = container.clientWidth,
-		height = Math.min(container.clientHeight, 500)
-		
+	let container = document.getElementById('oscilloscope-container')
+	let width = container.clientWidth
+	let height = Math.min(container.clientHeight, 500)
+	
+	// Canvas configuration
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
 	ctx1.lineWidth = 1
@@ -146,85 +146,8 @@ let initOscilloscopeView = () => {
 	ctx3.font = '15px Raleway'
 	ctx3.textAlign = 'center'
 	
-	let axesAreDrawn = false,
-		gridIsDrawn = false
-		
-	let drawAxes = () => {
-		// Horizontal
-		ctx2.beginPath()
-		ctx2.moveTo(10/100 * width, height / 2)
-		ctx2.lineTo(92/100 * width, height / 2)
-		ctx2.stroke()
-		ctx2.closePath()
-		
-		// Vertical
-		ctx2.beginPath()
-		ctx2.moveTo(90/100 * width, 90/100 * height)
-		ctx2.lineTo(90/100 * width, 15/100 * height)
-		ctx2.stroke()
-		ctx2.closePath()
-		
-		// Vertical arrow
-		let arrowWidth = 0.75/100 * width,
-			arrowHeight = 5/100 * height
-		ctx2.beginPath()
-		ctx2.moveTo(90/100 * width, 10/100 * height)
-		ctx2.lineTo(90/100 * width - arrowWidth / 2, 10/100 * height + arrowHeight)
-		ctx2.lineTo(90/100 * width + arrowWidth / 2, 10/100 * height + arrowHeight)
-		ctx2.lineTo(90/100 * width, 10/100 * height)
-		ctx2.fill()
-		ctx2.closePath()
-		
-		// Horizontal arrow
-		ctx2.beginPath()
-		ctx2.moveTo(91/100 * width + arrowHeight, height / 2)
-		ctx2.lineTo(91/100 * width, height / 2 - arrowWidth / 2)
-		ctx2.lineTo(91/100 * width, height / 2 + arrowWidth / 2)
-		ctx2.lineTo(91/100 * width + arrowHeight, height / 2)
-		ctx2.fill()
-		ctx2.closePath()
-		
-		// Axes names
-		ctx2.fillText("Amplitude", 90/100 * width, 6/100 * height) 
-		ctx2.fillText("Time", 95/100 * width, height / 2 + 4/100 * height) 
-	}
-	let drawGrid = () => {
-		let verti = 21,
-			hori = 6
-			
-		// Vertical lines
-		let vStep = 1 / verti * 80/100 * width
-		for (let v = 0; v <= verti; v++) {
-			ctx3.beginPath()
-			let x = 10/100 * width + v * vStep
-			ctx3.moveTo(x, 10/100 * height)
-			ctx3.lineTo(x, 90/100 * height)
-			ctx3.stroke()
-			ctx3.closePath()
-		}
-		
-		// Horizontal lines
-		let hStep = 1 / hori * 80/100 * height
-		for (let h = 0; h <= hori; h++) {
-			ctx3.beginPath()
-			let y = 10/100 * height + h * hStep
-			ctx3.moveTo(10/100 * width, y)
-			ctx3.lineTo(90/100 * width, y)
-			ctx3.stroke()
-			ctx3.closePath()
-		}
-		
-		// Scales in the corner
-		// -> whole X range corresponds to 21.28 ms
-		ctx3.moveTo(5/100 * width, 97/100 * height)
-		ctx3.lineTo(5/100 * width + vStep, 97/100 * height)
-		ctx3.stroke()
-		ctx3.moveTo(5/100 * width, 97/100 * height)
-		ctx3.lineTo(5/100 * width, 97/100 * height - hStep)
-		ctx3.stroke()
-		ctx3.fillText("50%", 3/100 * width, 91.5/100 * height)
-		ctx3.fillText("1 ms", 7/100 * width, 100/100 * height)
-	}
+	let axesAreDrawn = false
+	let gridIsDrawn = false
 	
 	// Canvas time loop
 	let frame = 0
@@ -239,24 +162,23 @@ let initOscilloscopeView = () => {
 			ctx2.clearRect(0, 0, width, height)
 			axesAreDrawn = false
 		} else if (C.axisToggle && !axesAreDrawn) {
-			drawAxes()
+			drawAxes(ctx2, width, height, "Amplitude", "Time")
 			axesAreDrawn = true
 		}
 		
-		// Maybe clear of draw grid
+		// Maybe clear or draw grid
 		if (!C.gridToggle && gridIsDrawn) {
 			ctx3.clearRect(0, 0, width, height)
 			gridIsDrawn = false
 		} else if (C.gridToggle && !gridIsDrawn) {
-			drawGrid()
+			drawGrid(ctx3, width, height, 21,6, "50%", "1 ms")
 			gridIsDrawn = true
 		}
 		
 		// Draw curve
 		ctx1.beginPath()
 		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-		// There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
-		let increment = C.precisionToggle ? 1 : 10
+		let increment = C.precisionToggle ? 1 : 10 // There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
 		for (let i = 0; i < F.timuDataArray.length; i += increment) {
 			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 			let yCore = height - height * F.timuDataArray[i] / 255
@@ -281,27 +203,69 @@ let initOscilloscopeView = () => {
 }
 let initFFTView = () => {
 	// Canvas setup
-	let ctx1 = document.getElementById('fft-canvas').getContext('2d')
-	let container = document.getElementById('fft-container'),
-		width = container.clientWidth,
-		height = Math.min(container.clientHeight, 400)
-		
+	let ctx1 = document.getElementById('fft-curve-canvas').getContext('2d')
+	let ctx2 = document.getElementById('fft-axes-canvas').getContext('2d')
+	let ctx3 = document.getElementById('fft-grid-canvas').getContext('2d')
+	
+	let container = document.getElementById('fft-container')
+	let width = container.clientWidth
+	let height = Math.min(container.clientHeight, 400)
+	
+	// Canvas configuration
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
-	
 	ctx1.lineWidth = 1
 	ctx1.strokeStyle = 'white'
+	
+	ctx2.canvas.width = width
+	ctx2.canvas.height = height
+	ctx2.lineWidth = 1
+	ctx2.strokeStyle = 'white'
+	ctx2.fillStyle = 'white'
+	ctx2.font = '15px Raleway'
+	ctx2.textAlign = 'center'
+	
+	ctx3.canvas.width = width
+	ctx3.canvas.height = height
+	ctx3.lineWidth = 1
+	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+	ctx3.fillStyle = 'white'
+	ctx3.font = '15px Raleway'
+	ctx3.textAlign = 'center'
+	
+	let axesAreDrawn = false
+	let gridIsDrawn = false
 	
 	// Canvas time loop
 	let frame = 0
 	let loop = () => {
 		frame++
 		
+		// Clear everything on curve canvas
 		ctx1.clearRect(0, 0, width, height)
-		ctx1.beginPath()
 		
+		// Maybe clear or draw axes
+		if (!C.axisToggle && axesAreDrawn) {
+			ctx2.clearRect(0, 0, width, height)
+			axesAreDrawn = false
+		} else if (C.axisToggle && !axesAreDrawn) {
+			drawAxes(ctx2, width, height, "dB", "Frequency")
+			axesAreDrawn = true
+		}
+		
+		// Maybe clear or draw grid
+		if (!C.gridToggle && gridIsDrawn) {
+			ctx3.clearRect(0, 0, width, height)
+			gridIsDrawn = false
+		} else if (C.gridToggle && !gridIsDrawn) {
+			drawGrid(ctx3, width, height, 24, 10, "10 dB", "1 kHz")
+			gridIsDrawn = true
+		}
+		
+		// Draw curve
+		ctx1.beginPath()
 		let step = width / F.frequDataArray.length
-		let increment = C.precisionToggle ? 1 : 5
+		let increment = C.precisionToggle ? 1 : 5 // There are 1024 values to draw. We draw only 1/5 of them unless precision+ mode is active
 		for (let i = 0; i < F.frequDataArray.length; i += increment) {
 			let x = i * step
 			let y = height - height * F.frequDataArray[i] / 255
@@ -311,10 +275,10 @@ let initFFTView = () => {
 				ctx1.lineTo(x, y)
 			}
 		}
-		
 		ctx1.stroke()
 		ctx1.closePath()
 		
+		// Call next animation frame
 		window.requestAnimationFrame(loop)
 	}
 	window.requestAnimationFrame(loop)
@@ -322,9 +286,9 @@ let initFFTView = () => {
 let initTimefreqView = () => {
 	// Canvas setup
 	let ctx1 = document.getElementById('timefreq-canvas').getContext('2d')
-	let container = document.getElementById('timefreq-container'),
-		width = container.clientWidth,
-		height = Math.min(container.clientHeight, 400)
+	let container = document.getElementById('timefreq-container')
+	let width = container.clientWidth
+	let height = Math.min(container.clientHeight, 400)
 		
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
@@ -407,9 +371,9 @@ let initCombinedView = () => {
 	let container = document.getElementById('combined-container')
 	
 	// First canvas setup (radial timefreq)
-	let ctx1 = document.getElementById('combined-timefreq-canvas').getContext('2d'),
-		width1 = container.clientWidth,
-		height1 = Math.min(container.clientHeight, 600)
+	let ctx1 = document.getElementById('combined-timefreq-canvas').getContext('2d')
+	let width1 = container.clientWidth
+	let height1 = Math.min(container.clientHeight, 600)
 		
 	ctx1.canvas.width = width1
 	ctx1.canvas.height = height1
@@ -484,8 +448,8 @@ let initCombinedView = () => {
 	
 	// Second canvas setup (oscilloscope)
 	let ctx2 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
-	let width2 = 200,
-		height2 = 200
+	let width2 = 200
+	let height2 = 200
 		
 	ctx2.canvas.width = width2
 	ctx2.canvas.height = height2
@@ -522,7 +486,81 @@ let initCombinedView = () => {
 	window.requestAnimationFrame(loop2)
 	
 }
-
+let drawAxes = (ctx, width, height, axis1name, axis2name) => {
+	// Horizontal
+	ctx.beginPath()
+	ctx.moveTo(10/100 * width, height / 2)
+	ctx.lineTo(92/100 * width, height / 2)
+	ctx.stroke()
+	ctx.closePath()
+	
+	// Vertical
+	ctx.beginPath()
+	ctx.moveTo(90/100 * width, 90/100 * height)
+	ctx.lineTo(90/100 * width, 15/100 * height)
+	ctx.stroke()
+	ctx.closePath()
+	
+	// Vertical arrow
+	let arrowWidth = 0.75/100 * width,
+		arrowHeight = 5/100 * height
+	ctx.beginPath()
+	ctx.moveTo(90/100 * width, 10/100 * height)
+	ctx.lineTo(90/100 * width - arrowWidth / 2, 10/100 * height + arrowHeight)
+	ctx.lineTo(90/100 * width + arrowWidth / 2, 10/100 * height + arrowHeight)
+	ctx.lineTo(90/100 * width, 10/100 * height)
+	ctx.fill()
+	ctx.closePath()
+	
+	// Horizontal arrow
+	ctx.beginPath()
+	ctx.moveTo(91/100 * width + arrowHeight, height / 2)
+	ctx.lineTo(91/100 * width, height / 2 - arrowWidth / 2)
+	ctx.lineTo(91/100 * width, height / 2 + arrowWidth / 2)
+	ctx.lineTo(91/100 * width + arrowHeight, height / 2)
+	ctx.fill()
+	ctx.closePath()
+	
+	// Axes names
+	ctx.fillText(axis1name, 90/100 * width, 6/100 * height) 
+	ctx.fillText(axis2name, 95/100 * width, height / 2 + 4/100 * height) 
+}
+let drawGrid = (ctx, width, height, vertiCuts, horiCuts, scale1text, scale2text) => {
+	
+	// Vertical lines
+	let vStep = 1 / vertiCuts * 80/100 * width
+	for (let v = 0; v <= vertiCuts; v++) {
+		ctx.beginPath()
+		let x = 10/100 * width + v * vStep
+		ctx.moveTo(x, 10/100 * height)
+		ctx.lineTo(x, 90/100 * height)
+		ctx.stroke()
+		ctx.closePath()
+	}
+	
+	// Horizontal lines
+	let hStep = 1 / horiCuts * 80/100 * height
+	for (let h = 0; h <= horiCuts; h++) {
+		ctx.beginPath()
+		let y = 10/100 * height + h * hStep
+		ctx.moveTo(10/100 * width, y)
+		ctx.lineTo(90/100 * width, y)
+		ctx.stroke()
+		ctx.closePath()
+	}
+	
+	// Scales in the corner
+	// -> whole X range corresponds to 21.28 ms
+	ctx.moveTo(5/100 * width, 97/100 * height)
+	ctx.lineTo(5/100 * width + vStep, 97/100 * height)
+	ctx.stroke()
+	ctx.moveTo(5/100 * width, 97/100 * height)
+	ctx.lineTo(5/100 * width, 97/100 * height - hStep)
+	ctx.stroke()
+	ctx.fillText(scale1text, 3/100 * width, 91.5/100 * height)
+	ctx.fillText(scale2text, 7/100 * width, 100/100 * height)
+}
+	
 let startAudio = () => {
 	// Create main audio context with 48kHz sample rate
 	F.audioContext = new AudioContext({ sampleRate: 48000 })
@@ -544,7 +582,10 @@ let startAudio = () => {
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
 	// Calibrate reactivity (more or less averaged with previous value), 0.8 is default, 0 is not averaged and thus super reactive, and 1 the maximum
-	F.analyser.smoothingTimeConstant = 0
+	F.analyser.smoothingTimeConstant = 0.1
+	
+	F.analyser.minDecibels = -100
+	F.analyser.maxDecibels = 0
 	
 	// Start oscillator
 	if (!F.isOscillatorOn) {
@@ -577,13 +618,6 @@ let startOscillator = () => {
 	
 	// Don't forget to connect it with analyser!
 	F.osci.connect(F.analyser)
-	
-	let duration = 1
-	//F.osci.stop(duration)
-	setTimeout(() => {
-		//F.isOscillatorOn = false
-	}, duration * 1000)
-	
 }
 let startMicrophone = () => {
 	if (navigator.mediaDevices) {
