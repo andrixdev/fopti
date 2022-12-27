@@ -8,8 +8,7 @@
 let C = {
 	axisToggle: false,
 	gridToggle: false,
-	precisionToggle: false,
-	loglogToggle: false
+	precisionToggle: false
 }
 
 document.addEventListener("DOMContentLoaded", (ev) => {
@@ -37,13 +36,6 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 			// Toggle global control variable
 			C.precisionToggle = !C.precisionToggle
 			toggledVariable = C.precisionToggle
-		}
-		
-		// 'L' key
-		if (event.keyCode == 76) {
-			// Toggle global control variable
-			C.loglogToggle = !C.loglogToggle
-			toggledVariable = C.loglogToggle
 		}
 		
 		// Apply to all instances of UI controls

@@ -128,7 +128,7 @@ let initOscilloscopeView = () => {
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
 	ctx1.lineWidth = 1
-	ctx1.strokeStyle = 'white'
+	ctx1.strokeStyle = 'hsla(140, 100%, 60%, 1)'
 	
 	ctx2.canvas.width = width
 	ctx2.canvas.height = height
@@ -213,7 +213,7 @@ let initFFTView = () => {
 	ctx1.canvas.width = width
 	ctx1.canvas.height = height
 	ctx1.lineWidth = 1
-	ctx1.strokeStyle = 'white'
+	ctx1.strokeStyle = 'hsla(0, 100%, 55%, 1)'
 	
 	ctx2.canvas.width = width
 	ctx2.canvas.height = height
@@ -226,10 +226,9 @@ let initFFTView = () => {
 	ctx3.canvas.width = width
 	ctx3.canvas.height = height
 	ctx3.lineWidth = 1
-	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.4)'
-	ctx3.fillStyle = 'white'
-	ctx3.font = '15px Raleway'
-	ctx3.textAlign = 'center'
+	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+	ctx3.fillStyle = 'rgba(255, 255, 255, 0.6)'
+	ctx3.font = '13px Raleway'
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
@@ -499,9 +498,10 @@ let drawAxes = (type, ctx, width, height) => {
 	ctx.closePath()
 	
 	// Vertical axis
+	let xVertiAxis = type == 'oscilloscope' ? 90/100 * width : 10/100 * width
 	ctx.beginPath()
-	ctx.moveTo(90/100 * width, 90/100 * height)
-	ctx.lineTo(90/100 * width, 15/100 * height)
+	ctx.moveTo(xVertiAxis, 90/100 * height)
+	ctx.lineTo(xVertiAxis, 15/100 * height)
 	ctx.stroke()
 	ctx.closePath()
 	
@@ -520,10 +520,10 @@ let drawAxes = (type, ctx, width, height) => {
 	
 	// Vertical arrow
 	ctx.beginPath()
-	ctx.moveTo(90/100 * width, 10/100 * height)
-	ctx.lineTo(90/100 * width - arrowWidth / 2, 10/100 * height + arrowHeight)
-	ctx.lineTo(90/100 * width + arrowWidth / 2, 10/100 * height + arrowHeight)
-	ctx.lineTo(90/100 * width, 10/100 * height)
+	ctx.moveTo(xVertiAxis, 10/100 * height)
+	ctx.lineTo(xVertiAxis - arrowWidth / 2, 10/100 * height + arrowHeight)
+	ctx.lineTo(xVertiAxis + arrowWidth / 2, 10/100 * height + arrowHeight)
+	ctx.lineTo(xVertiAxis, 10/100 * height)
 	ctx.fill()
 	ctx.closePath()
 	
@@ -537,13 +537,14 @@ let drawAxes = (type, ctx, width, height) => {
 		text2x = 95/100 * width
 		text2y = height / 2 + 4/100 * height
 	} else if (type == 'fft') {
-		axis1name = "dB"
-		axis2name = "Frequency"
-		text1x = 90/100 * width
+		axis1name = "Power (dB)"
+		axis2name = "Frequency (kHz)"
+		text1x = 10/100 * width
 		text1y = 6/100 * height
-		text2x = 92/100 * width
-		text2y = 95/100 * height
+		text2x = 90/100 * width
+		text2y = 98/100 * height
 	}
+	ctx.textAlign = 'center'
 	ctx.fillText(axis1name, text1x, text1y) 
 	ctx.fillText(axis2name, text2x, text2y)
 }
@@ -572,33 +573,46 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		ctx.closePath()
 	}
 	
-	// Scales in the corner
-	// -> whole X range corresponds to 21.28 ms
-	ctx.moveTo(5/100 * width, 97/100 * height)
-	ctx.lineTo(5/100 * width + vStep, 97/100 * height)
-	ctx.stroke()
-	ctx.moveTo(5/100 * width, 97/100 * height)
-	ctx.lineTo(5/100 * width, 97/100 * height - hStep)
-	ctx.stroke()
-	
-	let scale1text, scale2text, text1x, text1y, text2x, text2y
+	// Scales
 	if (type == 'oscilloscope') {
+		// Scales in the corner
+		// (whole X range corresponds to 21.28 ms of signal)
+		ctx.moveTo(5/100 * width, 97/100 * height)
+		ctx.lineTo(5/100 * width + vStep, 97/100 * height)
+		ctx.stroke()
+		ctx.moveTo(5/100 * width, 97/100 * height)
+		ctx.lineTo(5/100 * width, 97/100 * height - hStep)
+		ctx.stroke()
+		
+		let scale1text, scale2text, text1x, text1y, text2x, text2y
 		scale1text = "50%"
 		scale2text = "1 ms"
 		text1x = 3/100 * width
 		text1y = 91.5/100 * height
 		text2x = 7/100 * width
 		text2y = 100/100 * height
+		
+		ctx.textAlign = 'center'
+		ctx.fillText(scale1text, text1x, text1y)
+		ctx.fillText(scale2text, text2x, text2y)
 	} else if (type == 'fft') {
-		scale1text = "10 dB"
-		scale2text = "1 kHz"
-		text1x = 3/100 * width
-		text1y = 91.5/100 * height
-		text2x = 7/100 * width
-		text2y = 100/100 * height
+		// Horizontal scales
+		let vStep = 1 / vertiCuts * 80/100 * width
+		for (let v = 0; v <= vertiCuts; v++) {
+			let x = 10/100 * width + v * vStep
+			ctx.textAlign = 'center'
+			ctx.fillText(v, x, 93.5/100 * height)
+		}
+		
+		// Vertical scales
+		let hStep = 1 / horiCuts * 80/100 * height
+		for (let h = 0; h <= horiCuts; h++) {
+			let y = 11.2/100 * height + h * hStep
+			ctx.textAlign = 'right'
+			ctx.fillText(-10 * h, 9/100 * width, y)
+		}
 	}
-	ctx.fillText(scale1text, text1x, text1y)
-	ctx.fillText(scale2text, text2x, text2y)
+	
 }
 	
 let startAudio = () => {
