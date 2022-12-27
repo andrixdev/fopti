@@ -152,46 +152,50 @@ let initOscilloscopeView = () => {
 	// Canvas time loop
 	let frame = 0
 	let loop = () => {
-		frame++
 		
-		// Clear everything on curve canvas
-		ctx1.clearRect(0, 0, width, height)
-		
-		// Maybe clear or draw axes
-		if (!C.axisToggle && axesAreDrawn) {
-			ctx2.clearRect(0, 0, width, height)
-			axesAreDrawn = false
-		} else if (C.axisToggle && !axesAreDrawn) {
-			drawAxes('oscilloscope', ctx2, width, height)
-			axesAreDrawn = true
-		}
-		
-		// Maybe clear or draw grid
-		if (!C.gridToggle && gridIsDrawn) {
-			ctx3.clearRect(0, 0, width, height)
-			gridIsDrawn = false
-		} else if (C.gridToggle && !gridIsDrawn) {
-			drawGrid('oscilloscope', ctx3, width, height, 21, 6)
-			gridIsDrawn = true
-		}
-		
-		// Draw curve
-		ctx1.beginPath()
-		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-		let increment = C.precisionToggle ? 1 : 10 // There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
-		for (let i = 0; i < F.timuDataArray.length; i += increment) {
-			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
-			let yCore = height - height * F.timuDataArray[i] / 255
-			let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore // Signal can range up to max 53% of graph height
+		// Work on canvases only if view is active
+		if (F.activeView == 'oscilloscope') {
+			frame++
 			
-			if (i == 0) {
-				ctx1.moveTo(x, y)
-			} else {
-				ctx1.lineTo(x, y)
+			// Clear everything on curve canvas
+			ctx1.clearRect(0, 0, width, height)
+		
+			// Maybe clear or draw axes
+			if (!C.axisToggle && axesAreDrawn) {
+				ctx2.clearRect(0, 0, width, height)
+				axesAreDrawn = false
+			} else if (C.axisToggle && !axesAreDrawn) {
+				drawAxes('oscilloscope', ctx2, width, height)
+				axesAreDrawn = true
 			}
+			
+			// Maybe clear or draw grid
+			if (!C.gridToggle && gridIsDrawn) {
+				ctx3.clearRect(0, 0, width, height)
+				gridIsDrawn = false
+			} else if (C.gridToggle && !gridIsDrawn) {
+				drawGrid('oscilloscope', ctx3, width, height, 21, 6)
+				gridIsDrawn = true
+			}
+			
+			// Draw curve
+			ctx1.beginPath()
+			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
+			let increment = C.precisionToggle ? 1 : 10 // There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
+			for (let i = 0; i < F.timuDataArray.length; i += increment) {
+				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
+				let yCore = height - height * F.timuDataArray[i] / 255
+				let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore // Signal can range up to max 53% of graph height
+				
+				if (i == 0) {
+					ctx1.moveTo(x, y)
+				} else {
+					ctx1.lineTo(x, y)
+				}
+			}
+			ctx1.stroke()
+			ctx1.closePath()
 		}
-		ctx1.stroke()
-		ctx1.closePath()
 		
 		// Call next animation frame
 		window.requestAnimationFrame(loop)
@@ -236,46 +240,51 @@ let initFFTView = () => {
 	// Canvas time loop
 	let frame = 0
 	let loop = () => {
-		frame++
 		
-		// Clear everything on curve canvas
-		ctx1.clearRect(0, 0, width, height)
-		
-		// Maybe clear or draw axes
-		if (!C.axisToggle && axesAreDrawn) {
-			ctx2.clearRect(0, 0, width, height)
-			axesAreDrawn = false
-		} else if (C.axisToggle && !axesAreDrawn) {
-			drawAxes('fft', ctx2, width, height)
-			axesAreDrawn = true
-		}
-		
-		// Maybe clear or draw grid
-		if (!C.gridToggle && gridIsDrawn) {
-			ctx3.clearRect(0, 0, width, height)
-			gridIsDrawn = false
-		} else if (C.gridToggle && !gridIsDrawn) {
-			drawGrid('fft', ctx3, width, height, 24, 10)
-			gridIsDrawn = true
-		}
-		
-		// Draw curve
-		ctx1.beginPath()
-		let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
-		let increment = C.precisionToggle ? 1 : 5 // There are 1024 values to draw. We draw only 1/5 of them unless precision+ mode is active
-		for (let i = 0; i < F.frequDataArray.length; i += increment) {
-			let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
-			let y = (axesAreDrawn || gridIsDrawn) ?
-			(90/100 * height - 80/100 * height * F.frequDataArray[i] / 255) : (height - height * F.frequDataArray[i] / 255)
+		// Work on canvases only if view is active
+		if (F.activeView == 'fft') {
+			frame++
 			
-			if (i == 0) {
-				ctx1.moveTo(x, y)
-			} else {
-				ctx1.lineTo(x, y)
+			// Clear everything on curve canvas
+			ctx1.clearRect(0, 0, width, height)
+			
+			// Maybe clear or draw axes
+			if (!C.axisToggle && axesAreDrawn) {
+				ctx2.clearRect(0, 0, width, height)
+				axesAreDrawn = false
+			} else if (C.axisToggle && !axesAreDrawn) {
+				drawAxes('fft', ctx2, width, height)
+				axesAreDrawn = true
 			}
+			
+			// Maybe clear or draw grid
+			if (!C.gridToggle && gridIsDrawn) {
+				ctx3.clearRect(0, 0, width, height)
+				gridIsDrawn = false
+			} else if (C.gridToggle && !gridIsDrawn) {
+				drawGrid('fft', ctx3, width, height, 24, 10)
+				gridIsDrawn = true
+			}
+			
+			// Draw curve
+			ctx1.beginPath()
+			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
+			let increment = C.precisionToggle ? 1 : 5 // There are 1024 values to draw. We draw only 1/5 of them unless precision+ mode is active
+			for (let i = 0; i < F.frequDataArray.length; i += increment) {
+				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
+				let y = (axesAreDrawn || gridIsDrawn) ?
+				(90/100 * height - 80/100 * height * F.frequDataArray[i] / 255) : (height - height * F.frequDataArray[i] / 255)
+				
+				if (i == 0) {
+					ctx1.moveTo(x, y)
+				} else {
+					ctx1.lineTo(x, y)
+				}
+			}
+			ctx1.stroke()
+			ctx1.closePath()
+			
 		}
-		ctx1.stroke()
-		ctx1.closePath()
 		
 		// Call next animation frame
 		window.requestAnimationFrame(loop)
@@ -312,55 +321,60 @@ let initTimefreqView = () => {
 	let rangeProportion = 0.3
 		
 	let loop = () => {
-		frame++
-		let newTime = new Date().getTime()
 		
-		// Radar over X axis
-		X = width * ((newTime - F.timefreqCtxTimerStart) % radarMS) / radarMS
-		
-		// Paint wider rectangles if refresh time is longer
-		let thickness = width * (newTime - time) / radarMS
-		
-		/*
-		ctx1.beginPath()
-		ctx1.fillStyle = 'black'
-		ctx1.clearRect(X - thickness, 0, thickness, height)
-		ctx1.closePath()
-		*/
-		
-		for (let s = 0; s < sections; s++) {
-			let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+		// Work on canvases only if view is active
+		if (F.activeView == 'timefreq') {
+			frame++
 			
-			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+			let newTime = new Date().getTime()
 			
-			// Position of colored zone
-			let y = height - height * s / sections
+			// Radar over X axis
+			X = width * ((newTime - F.timefreqCtxTimerStart) % radarMS) / radarMS
 			
-			// Colors
-			let hue = 260 - sampleValue / 255 * 60
-			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
-			let alpha = sampleValue / 255 * 0.7
+			// Paint wider rectangles if refresh time is longer
+			let thickness = width * (newTime - time) / radarMS
 			
-			// Clear previous (not painting black because of composite 'lighter' mode)
-			ctx1.clearRect(X - thickness, y, thickness, zoneHeight)
-			
-			// Fill!
-			ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-			ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
-			
-			// Draw a shadow circle around
+			/*
 			ctx1.beginPath()
-			let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
-			radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
-			
-			ctx1.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
-			ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
-			ctx1.fill()
+			ctx1.fillStyle = 'black'
+			ctx1.clearRect(X - thickness, 0, thickness, height)
 			ctx1.closePath()
+			*/
+			
+			for (let s = 0; s < sections; s++) {
+				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+				
+				let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+				
+				// Position of colored zone
+				let y = height - height * s / sections
+				
+				// Colors
+				let hue = 260 - sampleValue / 255 * 60
+				let lum = 0.3 + 0.6 * sampleValue / 255 * 100
+				let alpha = sampleValue / 255 * 0.7
+				
+				// Clear previous (not painting black because of composite 'lighter' mode)
+				ctx1.clearRect(X - thickness, y, thickness, zoneHeight)
+				
+				// Fill!
+				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+				ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
+				
+				// Draw a shadow circle around
+				ctx1.beginPath()
+				let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
+				radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
+				
+				ctx1.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
+				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
+				ctx1.fill()
+				ctx1.closePath()
+			}
+			
+			lastX = X
+			time = newTime
 		}
-		
-		lastX = X
-		time = newTime
 		
 		window.requestAnimationFrame(loop)
 	}
@@ -400,38 +414,43 @@ let initCombinedView = () => {
 	let rangeProportion = 0.3
 		
 	let loop1 = () => {
-		frame1++
-		let newTime = new Date().getTime()
 		
-		// Radar over Theta
-		theta = 2 * Math.PI * ((newTime - F.combinedCtxTimerStart) % radarMS) / radarMS
-		
-		// Paint wider arcs (in theta) if refresh time is longer
-		let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
-		
-		for (let s = 0; s < sections; s++) {
-			let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+		// Work on canvases only if view is active
+		if (F.activeView == 'combined') {
 			
-			let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+			frame1++
+			let newTime = new Date().getTime()
 			
-			let r = baseRadius + (maxRadius - baseRadius) * s / sections
+			// Radar over Theta
+			theta = 2 * Math.PI * ((newTime - F.combinedCtxTimerStart) % radarMS) / radarMS
 			
-			// Colors
-			let hue = 260 - sampleValue / 255 * 60
-			let lum = 0.3 + 0.6 * sampleValue / 255 * 100
-			let alpha = sampleValue / 255 * 0.7
+			// Paint wider arcs (in theta) if refresh time is longer
+			let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
 			
-			// Draw new arc
-			ctx1.beginPath()
-			ctx1.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-			ctx1.lineWidth = zoneHeight
-			ctx1.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
-			ctx1.stroke()
-			ctx1.closePath()
+			for (let s = 0; s < sections; s++) {
+				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
+				
+				let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+				
+				let r = baseRadius + (maxRadius - baseRadius) * s / sections
+				
+				// Colors
+				let hue = 260 - sampleValue / 255 * 60
+				let lum = 0.3 + 0.6 * sampleValue / 255 * 100
+				let alpha = sampleValue / 255 * 0.7
+				
+				// Draw new arc
+				ctx1.beginPath()
+				ctx1.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+				ctx1.lineWidth = zoneHeight
+				ctx1.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
+				ctx1.stroke()
+				ctx1.closePath()
+			}
+			
+			lastTheta = theta
+			time = newTime
 		}
-		
-		lastTheta = theta
-		time = newTime
 		
 		window.requestAnimationFrame(loop1)
 	}
@@ -459,26 +478,31 @@ let initCombinedView = () => {
 	// Canvas time loop
 	let frame2 = 0
 	let loop2 = () => {
-		frame2++
 		
-		ctx2.clearRect(0, 0, width2, height2)
-		ctx2.beginPath()
-		
-		let l = F.timuDataArray.length,
-			step = width2 / l
-		for (let i = 0; i < F.timuDataArray.length; i += 5) {
-			let y = height2 * (255 - F.timuDataArray[i]) / 255
-			y = height2 / 2 + 0.8 * (y - height2 / 2) * Math.pow(Math.sin(Math.PI * i / l), 2)
+		// Work on canvases only if view is active
+		if (F.activeView == 'combined') {
+			
+			frame2++
+			
+			ctx2.clearRect(0, 0, width2, height2)
+			ctx2.beginPath()
+			
+			let l = F.timuDataArray.length,
+				step = width2 / l
+			for (let i = 0; i < F.timuDataArray.length; i += 5) {
+				let y = height2 * (255 - F.timuDataArray[i]) / 255
+				y = height2 / 2 + 0.8 * (y - height2 / 2) * Math.pow(Math.sin(Math.PI * i / l), 2)
 
-			if (i == 0) {
-				ctx2.moveTo(0, y)
-			} else {
-				ctx2.lineTo(i * step, y)
+				if (i == 0) {
+					ctx2.moveTo(0, y)
+				} else {
+					ctx2.lineTo(i * step, y)
+				}
+				
 			}
 			
+			ctx2.stroke()
 		}
-		
-		ctx2.stroke()
 		
 		window.requestAnimationFrame(loop2)
 	}
