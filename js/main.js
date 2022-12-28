@@ -398,6 +398,10 @@ let initTimefreqView = () => {
 			}
 			
 			// Work on 'curve' canvas
+			if (lastTime == F.timefreqBaseTime) {
+				// Means another view was active --> clear zone
+				ctx1.clearRect(0, 0, width, height)
+			}
 			let newTime = new Date().getTime()
 			
 			// Radar over X axis
@@ -441,6 +445,9 @@ let initTimefreqView = () => {
 			
 			lastX = X
 			lastTime = newTime
+		} else {
+			F.timefreqBaseTime = new Date().getTime()
+			lastTime = F.timefreqBaseTime
 		}
 		
 		window.requestAnimationFrame(loop)
