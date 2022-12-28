@@ -18,7 +18,14 @@ let F = {
 	isOscillatorOn: false,
 	timefreqCtxTimerStart: undefined,
 	combinedCtxTimerStart: undefined,
-	activeView: 'home'
+	activeView: 'home',
+	viewIsInit: {
+		osci: false,
+		fft: false,
+		timefreq: false,
+		combined: false
+	}
+	
 }
 const log = console.log
 const dom = {
@@ -73,8 +80,7 @@ let setActiveTab = (node) => {
 	node.classList = 'tab active'
 }
 let initNavAndViewMechanics = () => {
-	// Nav mechanics (for now clearing HTML and thus resetting all listeners)
-	
+		
 	document.getElementById('home').addEventListener('click', (ev) => {
 		loadView('home')
 		resetActivatedTab()
@@ -86,7 +92,10 @@ let initNavAndViewMechanics = () => {
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
-		initOscilloscopeView()
+		if (!F.viewIsInit.osci) {
+			initOscilloscopeView()
+			F.viewIsInit.osci = true
+		}
 	})
 	
 	document.getElementById('fft').addEventListener('click', (ev) => {
@@ -94,7 +103,10 @@ let initNavAndViewMechanics = () => {
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
-		initFFTView()
+		if (!F.viewIsInit.fft) {
+			initFFTView()
+			F.viewIsInit.fft = true
+		}
 	})
 	
 	document.getElementById('timefreq').addEventListener('click', (ev) => {
@@ -102,7 +114,10 @@ let initNavAndViewMechanics = () => {
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
-		initTimefreqView()
+		if (!F.viewIsInit.timefreq) {
+			initTimefreqView()
+			F.viewIsInit.timefreq = true
+		}
 	})
 	
 	document.getElementById('combined').addEventListener('click', (ev) => {
@@ -110,7 +125,10 @@ let initNavAndViewMechanics = () => {
 		resetActivatedTab()
 		setActiveTab(ev.target)
 		
-		initCombinedView()
+		if (!F.viewIsInit.combined) {
+			initCombinedView()
+			F.viewIsInit.combined = true
+		}
 	})
 }
 
@@ -283,7 +301,6 @@ let initFFTView = () => {
 			}
 			ctx1.stroke()
 			ctx1.closePath()
-			
 		}
 		
 		// Call next animation frame
