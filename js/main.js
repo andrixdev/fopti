@@ -80,7 +80,7 @@ let setActiveTab = (node) => {
 	node.classList = 'tab active'
 }
 let initNavAndViewMechanics = () => {
-		
+	
 	document.getElementById('home').addEventListener('click', (ev) => {
 		loadView('home')
 		resetActivatedTab()
@@ -131,33 +131,37 @@ let initNavAndViewMechanics = () => {
 		}
 	})
 }
+let configureCanvas = (ctx, width, height) => {
+	ctx.canvas.width = width * window.devicePixelRatio
+	ctx.canvas.height = height * window.devicePixelRatio
+	ctx.canvas.style.width = width + "px"
+	ctx.canvas.style.height = height + "px"
+	ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+}
 
 let initOscilloscopeView = () => {
 	// Canvas setup
 	let ctx1 = document.getElementById('oscilloscope-curve-canvas').getContext('2d')
 	let ctx2 = document.getElementById('oscilloscope-axes-canvas').getContext('2d')
 	let ctx3 = document.getElementById('oscilloscope-grid-canvas').getContext('2d')
-		
+	
 	let container = document.getElementById('oscilloscope-container')
 	let width = container.clientWidth
 	let height = Math.min(container.clientHeight, 500)
 	
-	// Canvas configuration
-	ctx1.canvas.width = width
-	ctx1.canvas.height = height
+	// Canvas configurations
+	configureCanvas(ctx1, width, height)
 	ctx1.lineWidth = 1
 	ctx1.strokeStyle = 'hsla(140, 100%, 60%, 1)'
 	
-	ctx2.canvas.width = width
-	ctx2.canvas.height = height
+	configureCanvas(ctx2, width, height)
 	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
 	ctx2.fillStyle = 'white'
 	ctx2.font = '15px Raleway'
 	ctx2.textAlign = 'center'
 	
-	ctx3.canvas.width = width
-	ctx3.canvas.height = height
+	configureCanvas(ctx3, width, height)
 	ctx3.lineWidth = 1
 	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.4)'
 	ctx3.fillStyle = 'white'
@@ -232,21 +236,18 @@ let initFFTView = () => {
 	let height = Math.min(container.clientHeight, 400)
 	
 	// Canvas configuration
-	ctx1.canvas.width = width
-	ctx1.canvas.height = height
+	configureCanvas(ctx1, width, height)
 	ctx1.lineWidth = 1
 	ctx1.strokeStyle = 'hsla(0, 100%, 55%, 1)'
 	
-	ctx2.canvas.width = width
-	ctx2.canvas.height = height
+	configureCanvas(ctx2, width, height)
 	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
 	ctx2.fillStyle = 'white'
 	ctx2.font = '15px Raleway'
 	ctx2.textAlign = 'center'
 	
-	ctx3.canvas.width = width
-	ctx3.canvas.height = height
+	configureCanvas(ctx3, width, height)
 	ctx3.lineWidth = 1
 	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
 	ctx3.fillStyle = 'rgba(255, 255, 255, 0.6)'
@@ -314,13 +315,13 @@ let initTimefreqView = () => {
 	let container = document.getElementById('timefreq-container')
 	let width = container.clientWidth
 	let height = Math.min(container.clientHeight, 400)
-		
-	ctx1.canvas.width = width
-	ctx1.canvas.height = height
+	
+	// Canvas configurations
+	configureCanvas(ctx1, width, height)
 	ctx1.globalCompositeOperation = 'lighter'
 	//ctx1.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
-	// Canvas background
+	// Black background
 	ctx1.fillStyle = 'black'
 	ctx1.fillRect(0, 0, width, height)
 	
@@ -405,8 +406,7 @@ let initCombinedView = () => {
 	let width1 = container.clientWidth
 	let height1 = Math.min(container.clientHeight, 600)
 		
-	ctx1.canvas.width = width1
-	ctx1.canvas.height = height1
+	configureCanvas(ctx1, width1, height1)
 	ctx1.imageSmoothingEnabled = true
 	
 	// Canvas background
@@ -486,9 +486,7 @@ let initCombinedView = () => {
 	let width2 = 200
 	let height2 = 200
 		
-	ctx2.canvas.width = width2
-	ctx2.canvas.height = height2
-	
+	configureCanvas(ctx2, width2, height2)
 	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
 	
@@ -523,8 +521,8 @@ let initCombinedView = () => {
 		
 		window.requestAnimationFrame(loop2)
 	}
-	window.requestAnimationFrame(loop2)
 	
+	window.requestAnimationFrame(loop2)
 }
 let drawAxes = (type, ctx, width, height) => {
 	// type can be 'oscilloscope', 'fft', 'timefreq' or 'combined'
