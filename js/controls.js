@@ -11,41 +11,58 @@ let C = {
 	precisionToggle: false
 }
 
-document.addEventListener("DOMContentLoaded", (ev) => {
+let toggle = (keycode) => {
+	// 'A' key
+	if (keycode == 65) {
+		// Toggle global control variable
+		C.axisToggle = !C.axisToggle
+	}
 	
-	document.addEventListener("keyup", (event) => {
-		
-		let toggledVariable
-		
-		// 'A' key
-		if (event.keyCode == 65) {
-			// Toggle global control variable
-			C.axisToggle = !C.axisToggle
-			toggledVariable = C.axisToggle
-		}
-		
-		// 'G' key
-		if (event.keyCode == 71) {
-			// Toggle global control variable
-			C.gridToggle = !C.gridToggle
-			toggledVariable = C.gridToggle
-		}
-		
-		// 'P' key
-		if (event.keyCode == 80) {
-			// Toggle global control variable
-			C.precisionToggle = !C.precisionToggle
-			toggledVariable = C.precisionToggle
-		}
-		
-		// Apply to all instances of UI controls
-		Array.from(document.getElementsByClassName('key-icon')).forEach((el) => {
-			if (el.getAttribute('data-keycode') == event.keyCode) {
-				el.parentNode.classList.remove('active')
-				if (toggledVariable) el.parentNode.classList.add('active')
-			}
-		})
-		
+	// 'G' key
+	if (keycode == 71) {
+		// Toggle global control variable
+		C.gridToggle = !C.gridToggle
+	}
+	
+	// 'P' key
+	if (keycode == 80) {
+		// Toggle global control variable
+		C.precisionToggle = !C.precisionToggle
+	}
+}
+let updateControlsView = () => {
+	// Remove all .active classes
+	Array.from(document.getElementsByClassName('control-tab')).forEach((el) => {
+		el.classList.remove('active')
 	})
 	
+	// Add .active on all active tabs
+	Array.from(document.getElementsByClassName('key-icon')).forEach((el) => {
+		let keycode = el.getAttribute('data-keycode')
+		if (
+			C.axisToggle && keycode == 65 ||
+			C.gridToggle && keycode == 71 ||
+			C.precisionToggle && keycode == 80
+		) {
+			el.parentNode.classList.add('active')
+		}
+	})
+}
+
+document.addEventListener("DOMContentLoaded", (ev) => {
+	
+	// Key control
+	document.addEventListener("keyup", (event) => {
+		toggle(event.keyCode)
+		updateControlsView()
+	})
+	
+	// Click/tap control
+	Array.from(document.getElementsByClassName('key-icon')).forEach((el) => {
+		el.addEventListener('click', (ev) => {
+			let keycode = ev.target.getAttribute('data-keycode')
+			toggle(keycode)
+			updateControlsView()
+		})
+	})
 })

@@ -134,6 +134,7 @@ main section.template {
 	margin-right: 7px;
 	box-shadow: white -2px 2px 0;
 	transition: background 100ms, color 100ms;
+	cursor: pointer;
 }
 .control-tab .key-icon::after {
 	content: attr(data-key);
@@ -156,6 +157,12 @@ main section.template {
 .control-tab.active .key-info {
 	opacity: 1;
 	text-shadow: white 0 0 3px;
+}
+.control-tab:not(.active) .key-icon:hover {
+	background: white;
+}
+.control-tab:not(.active) .key-icon:hover::after {
+	color: black;
 }
 
 /* Specific */
@@ -182,6 +189,12 @@ main section.template {
 }
 #home-container h1 {
 	font-size: 2.5rem;
+}
+#home-container a {
+	text-decoration: none;
+}
+#home-container a:hover {
+	text-shadow: white 0 0 2px;
 }
 
 @keyframes rotate {
