@@ -16,7 +16,7 @@ let F = {
 	frequDataArray: [],
 	isMikeOn: false,
 	isOscillatorOn: false,
-	timefreqCtxTimerStart: undefined,
+	timefreqBaseTime: undefined,
 	combinedCtxTimerStart: undefined,
 	activeView: 'home',
 	viewIsInit: {
@@ -311,7 +311,10 @@ let initFFTView = () => {
 }
 let initTimefreqView = () => {
 	// Canvas setup
-	let ctx1 = document.getElementById('timefreq-canvas').getContext('2d')
+	let ctx1 = document.getElementById('timefreq-curve-canvas').getContext('2d')
+	let ctx2 = document.getElementById('timefreq-axes-canvas').getContext('2d')
+	let ctx3 = document.getElementById('timefreq-grid-canvas').getContext('2d')
+	
 	let container = document.getElementById('timefreq-container')
 	let width = container.clientWidth
 	let height = Math.min(container.clientHeight, 400)
@@ -321,43 +324,88 @@ let initTimefreqView = () => {
 	ctx1.globalCompositeOperation = 'lighter'
 	//ctx1.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
-	// Black background
-	ctx1.fillStyle = 'black'
-	ctx1.fillRect(0, 0, width, height)
+	configureCanvas(ctx2, width, height)
+	ctx2.lineWidth = 1
+	ctx2.strokeStyle = 'white'
+	ctx2.fillStyle = 'white'
+	ctx2.font = '15px Raleway'
+	ctx2.textAlign = 'center'
+	
+	configureCanvas(ctx3, width, height)
+	ctx3.lineWidth = 1
+	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+	ctx3.fillStyle = 'rgba(255, 255, 255, 0.6)'
+	ctx3.font = '13px Raleway'
+	
+	let axesAreDrawn = false
+	let gridIsDrawn = false
 	
 	// Canvas time loop
-	F.timefreqCtxTimerStart = new Date().getTime()
+	F.timefreqBaseTime = new Date().getTime()
 	let frame = 0,
 		lastX = 0,
 		X = 0,
-		time = F.timefreqCtxTimerStart,
+		lastTime = F.timefreqBaseTime,
 		radarMS = 4000, // ms
 		sections = 50,
 		zoneHeight = height / sections
-		
+	
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
-		
+	
 	let loop = () => {
 		
 		// Work on canvases only if view is active
 		if (F.activeView == 'timefreq') {
 			frame++
 			
+			// Maybe clear or draw axes
+			if (!C.axisToggle && axesAreDrawn) {
+				ctx2.clearRect(0, 0, width, height)
+				axesAreDrawn = false
+				if (!gridIsDrawn) {
+					ctx1.clearRect(0, 0, width, height)
+					F.timefreqBaseTime = new Date().getTime()
+					lastTime = F.timefreqBaseTime
+				}
+			} else if (C.axisToggle && !axesAreDrawn) {
+				drawAxes('timefreq', ctx2, width, height)
+				axesAreDrawn = true
+				if (!gridIsDrawn) {
+					ctx1.clearRect(0, 0, width, height)
+					F.timefreqBaseTime = new Date().getTime()
+					lastTime = F.timefreqBaseTime
+				}
+			}
+			
+			// Maybe clear or draw grid
+			if (!C.gridToggle && gridIsDrawn) {
+				ctx3.clearRect(0, 0, width, height)
+				gridIsDrawn = false
+				if (!axesAreDrawn) {
+					ctx1.clearRect(0, 0, width, height)
+					F.timefreqBaseTime = new Date().getTime()
+					lastTime = F.timefreqBaseTime
+				}
+			} else if (C.gridToggle && !gridIsDrawn) {
+				drawGrid('timefreq', ctx3, width, height, 24, 10)
+				gridIsDrawn = true
+				if (!axesAreDrawn) {
+					ctx1.clearRect(0, 0, width, height)
+					F.timefreqBaseTime = new Date().getTime()
+					lastTime = F.timefreqBaseTime
+				}
+			}
+			
+			// Work on 'curve' canvas
 			let newTime = new Date().getTime()
 			
 			// Radar over X axis
-			X = width * ((newTime - F.timefreqCtxTimerStart) % radarMS) / radarMS
+			let xCore = width * ((newTime - F.timefreqBaseTime) % radarMS) / radarMS
+			let X = axesAreDrawn || gridIsDrawn ? 10/100 * width + 80/100 * xCore : xCore
 			
 			// Paint wider rectangles if refresh time is longer
-			let thickness = width * (newTime - time) / radarMS
-			
-			/*
-			ctx1.beginPath()
-			ctx1.fillStyle = 'black'
-			ctx1.clearRect(X - thickness, 0, thickness, height)
-			ctx1.closePath()
-			*/
+			let thickness = width * (newTime - lastTime) / radarMS
 			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -365,7 +413,8 @@ let initTimefreqView = () => {
 				let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
 				
 				// Position of colored zone
-				let y = height - height * s / sections
+				let yCore = height - height * s / sections
+				let y = axesAreDrawn || gridIsDrawn ? 10/100 * height + 80/100 * yCore : yCore
 				
 				// Colors
 				let hue = 260 - sampleValue / 255 * 60
@@ -391,7 +440,7 @@ let initTimefreqView = () => {
 			}
 			
 			lastX = X
-			time = newTime
+			lastTime = newTime
 		}
 		
 		window.requestAnimationFrame(loop)
@@ -582,6 +631,13 @@ let drawAxes = (type, ctx, width, height) => {
 		text1y = 6/100 * height
 		text2x = 90/100 * width
 		text2y = 98/100 * height
+	} else if (type == 'timefreq') {
+		axis1name = "Frequency"
+		axis2name = "Time"
+		text1x = 10/100 * width
+		text1y = 6/100 * height
+		text2x = 95/100 * width
+		text2y = 96/100 * height
 	}
 	ctx.textAlign = 'center'
 	ctx.fillText(axis1name, text1x, text1y) 
@@ -700,7 +756,7 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 100 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
+		F.osci.frequency.value = 1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
 	}, 500)
 	
 }
