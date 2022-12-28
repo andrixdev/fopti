@@ -616,12 +616,14 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 	if (type == 'oscilloscope') {
 		// Scales in the corner
 		// (whole X range corresponds to 21.28 ms of signal)
+		ctx.beginPath()
 		ctx.moveTo(5/100 * width, 97/100 * height)
 		ctx.lineTo(5/100 * width + vStep, 97/100 * height)
 		ctx.stroke()
 		ctx.moveTo(5/100 * width, 97/100 * height)
 		ctx.lineTo(5/100 * width, 97/100 * height - hStep)
 		ctx.stroke()
+		ctx.closePath()
 		
 		let scale1text, scale2text, text1x, text1y, text2x, text2y
 		scale1text = "50%"
@@ -653,7 +655,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 	}
 	
 }
-	
+
 let startAudio = () => {
 	// Create main audio context with 48kHz sample rate
 	F.audioContext = new AudioContext({ sampleRate: 48000 })
