@@ -17,7 +17,7 @@ let F = {
 	isMikeOn: false,
 	isOscillatorOn: false,
 	timefreqBaseTime: undefined,
-	combinedCtxTimerStart: undefined,
+	combinedBaseTime: undefined,
 	activeView: 'home',
 	viewIsInit: {
 		osci: false,
@@ -457,31 +457,53 @@ let initTimefreqView = () => {
 let initCombinedView = () => {
 	let container = document.getElementById('combined-container')
 	
-	// First canvas setup (radial timefreq)
 	let ctx1 = document.getElementById('combined-timefreq-canvas').getContext('2d')
+	let ctx2 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
+	let ctx3 = document.getElementById('combined-grid-canvas').getContext('2d')
 	let width1 = container.clientWidth
-	let height1 = Math.min(container.clientHeight, 600)
-		
+	let height1 = Math.min(container.clientHeight, 500)
+	let width2 = 200
+	let height2 = 200
+	
+	// Radial radar
 	configureCanvas(ctx1, width1, height1)
 	ctx1.imageSmoothingEnabled = true
-	
-	// Canvas background
+	let centerX = width1 / 2
+	let centerY = height1 / 2
 	ctx1.fillStyle = 'black'
 	ctx1.fillRect(0, 0, width1, height1)
 	
-	// Canvas time loop
-	F.combinedCtxTimerStart = new Date().getTime()
+	// Tiny oscilloscope
+	configureCanvas(ctx2, width2, height2)
+	ctx2.lineWidth = 1
+	ctx2.strokeStyle = 'white'
+	
+	// Grid
+	configureCanvas(ctx3, width1, height1)
+	ctx3.lineWidth = 1
+	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+	
+	let gridIsDrawn = false
+	
+	// Central circle on ctx1 to host oscilloscope (ctx2)
+	ctx1.beginPath()
+	ctx1.strokeStyle = 'white'
+	ctx1.lineWidth = 4
+	ctx1.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
+	ctx1.stroke()
+	ctx1.closePath()
+	
+	// Radial radar time loop
+	F.combinedBaseTime = new Date().getTime()
 	let frame1 = 0,
 		lastTheta = 0,
 		theta = 0,
-		time = F.combinedCtxTimerStart,
+		lastTime = F.combinedBaseTime,
 		radarMS = 5000, // ms
 		sections = 50,
 		baseRadius = 100,
 		maxRadius = 400,
-		zoneHeight = (maxRadius - baseRadius) / sections,
-		centerX = width1 / 2,
-		centerY = height1 / 2
+		zoneHeight = (maxRadius - baseRadius) / sections
 	
 	// Just analyse a proportion of all frequencies (lowest picthes)
 	let rangeProportion = 0.3
@@ -490,15 +512,25 @@ let initCombinedView = () => {
 		
 		// Work on canvases only if view is active
 		if (F.activeView == 'combined') {
-			
 			frame1++
+			
+			// Maybe clear or draw grid
+			if (!C.gridToggle && gridIsDrawn) {
+				ctx3.clearRect(0, 0, width1, height1)
+				gridIsDrawn = false
+			} else if (C.gridToggle && !gridIsDrawn) {
+				drawGrid('combined', ctx3, width1, height1, 21, 6, centerX, centerY)
+				gridIsDrawn = true
+			}
+			
+			// Radar time
 			let newTime = new Date().getTime()
 			
 			// Radar over Theta
-			theta = 2 * Math.PI * ((newTime - F.combinedCtxTimerStart) % radarMS) / radarMS
+			theta = 2 * Math.PI * ((newTime - F.combinedBaseTime) % radarMS) / radarMS
 			
 			// Paint wider arcs (in theta) if refresh time is longer
-			let thetaRange = 2 * Math.PI * (newTime - time) / radarMS
+			let thetaRange = 2 * Math.PI * (newTime - lastTime) / radarMS
 			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -522,37 +554,19 @@ let initCombinedView = () => {
 			}
 			
 			lastTheta = theta
-			time = newTime
+			lastTime = newTime
 		}
 		
 		window.requestAnimationFrame(loop1)
 	}
 	window.requestAnimationFrame(loop1)
 	
-	// Central circle to host oscilloscope canvas
-	ctx1.beginPath()
-	ctx1.strokeStyle = 'white'
-	ctx1.lineWidth = 4
-	ctx1.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
-	ctx1.stroke()
-	ctx1.closePath()
-	
-	// Second canvas setup (oscilloscope)
-	let ctx2 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
-	let width2 = 200
-	let height2 = 200
-		
-	configureCanvas(ctx2, width2, height2)
-	ctx2.lineWidth = 1
-	ctx2.strokeStyle = 'white'
-	
-	// Canvas time loop
+	// Tiny oscilloscope time loop
 	let frame2 = 0
 	let loop2 = () => {
 		
 		// Work on canvases only if view is active
 		if (F.activeView == 'combined') {
-			
 			frame2++
 			
 			ctx2.clearRect(0, 0, width2, height2)
@@ -569,7 +583,6 @@ let initCombinedView = () => {
 				} else {
 					ctx2.lineTo(i * step, y)
 				}
-				
 			}
 			
 			ctx2.stroke()
@@ -577,7 +590,6 @@ let initCombinedView = () => {
 		
 		window.requestAnimationFrame(loop2)
 	}
-	
 	window.requestAnimationFrame(loop2)
 }
 let drawAxes = (type, ctx, width, height) => {
@@ -650,29 +662,59 @@ let drawAxes = (type, ctx, width, height) => {
 	ctx.fillText(axis1name, text1x, text1y) 
 	ctx.fillText(axis2name, text2x, text2y)
 }
-let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
+let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter) => {
 	// type can be 'oscilloscope', 'fft', 'timefreq' or 'combined'
 	
-	// Vertical lines
-	let vStep = 1 / vertiCuts * 80/100 * width
-	for (let v = 0; v <= vertiCuts; v++) {
-		ctx.beginPath()
-		let x = 10/100 * width + v * vStep
-		ctx.moveTo(x, 10/100 * height)
-		ctx.lineTo(x, 90/100 * height)
-		ctx.stroke()
-		ctx.closePath()
-	}
+	let vStep, hStep
 	
-	// Horizontal lines
-	let hStep = 1 / horiCuts * 80/100 * height
-	for (let h = 0; h <= horiCuts; h++) {
-		ctx.beginPath()
-		let y = 10/100 * height + h * hStep
-		ctx.moveTo(10/100 * width, y)
-		ctx.lineTo(90/100 * width, y)
-		ctx.stroke()
-		ctx.closePath()
+	if (type != 'combined') {
+		// Vertical lines
+		vStep = 1 / vertiCuts * 80/100 * width
+		for (let v = 0; v <= vertiCuts; v++) {
+			ctx.beginPath()
+			let x = 10/100 * width + v * vStep
+			ctx.moveTo(x, 10/100 * height)
+			ctx.lineTo(x, 90/100 * height)
+			ctx.stroke()
+			ctx.closePath()
+		}
+		
+		// Horizontal lines
+		hStep = 1 / horiCuts * 80/100 * height
+		for (let h = 0; h <= horiCuts; h++) {
+			ctx.beginPath()
+			let y = 10/100 * height + h * hStep
+			ctx.moveTo(10/100 * width, y)
+			ctx.lineTo(90/100 * width, y)
+			ctx.stroke()
+			ctx.closePath()
+		}
+	} else if (type == 'combined') {
+		// Radial lines
+		let thetaStep = Math.PI / 12
+		let r1 = 100
+		let r2 = 600
+		for (let t = thetaStep; t < 2 * Math.PI; t += thetaStep) {
+			ctx.beginPath()
+			let x1 = xCenter + r1 * Math.cos(t)
+			let y1 = yCenter + r1 * Math.sin(t)
+			let x2 = xCenter + r2 * Math.cos(t)
+			let y2 = yCenter + r2 * Math.sin(t)
+			ctx.moveTo(x1, y1)
+			ctx.lineTo(x2, y2)
+			ctx.stroke()
+			ctx.closePath()
+		}
+		
+		// Orthoradial lines (circles)
+		let rStep = 30
+		for (let r = 0; r < 20; r++) {
+			let rad = 100 + r * rStep
+			ctx.beginPath()
+			ctx.arc(xCenter, yCenter, rad, 0, 2 * Math.PI, false)
+			ctx.stroke()
+			ctx.closePath()
+		}
 	}
 	
 	// Scales
