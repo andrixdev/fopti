@@ -202,10 +202,15 @@ let initOscilloscopeView = () => {
 			// Draw curve
 			ctx1.beginPath()
 			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-			let increment = C.precisionToggle ? 1 : 10 // There are 1024 values to draw. We draw only 1/10 of them unless precision+ mode is active
-			for (let i = 0; i < F.timuDataArray.length; i += increment) {
-				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
-				let yCore = height - height * F.timuDataArray[i] / 255
+			
+			let timeData = F.timuDataArray // Full 2048 array
+			// Chop down array if we have zoomed scale to keep just the first values (most recent milliseconds of signal)
+			let chopFactor = C.scale.x == 0 ? 1 : (C.scale.x == 1 ? 2 : (C.scale.x == 2 ? 10 : 1))
+			timeData = timeData.slice(0, timeData.length / chopFactor)
+			let increment = C.precisionToggle ? 1 : Math.floor(timeData.length / 200) // Draw all values or just 200 values
+			for (let i = 0; i < timeData.length; i += increment) {
+				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
+				let yCore = height - height * timeData[i] / 255
 				let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore // Signal can range up to max 53% of graph height
 				
 				if (i == 0) {
@@ -287,7 +292,7 @@ let initFFTView = () => {
 			// Draw curve
 			ctx1.beginPath()
 			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
-			let increment = C.precisionToggle ? 1 : 5 // There are 1024 values to draw. We draw only 1/5 of them unless precision+ mode is active
+			let increment = C.precisionToggle ? 1 : 5 // There are 2048 values to draw. We draw only 1/5 of them unless precision+ mode is active
 			for (let i = 0; i < F.frequDataArray.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 				let y = (axesAreDrawn || gridIsDrawn) ?
@@ -504,7 +509,7 @@ let initCombinedView = () => {
 		maxRadius = 400,
 		zoneHeight = (maxRadius - baseRadius) / sections
 	
-	// Just analyse a proportion of all frequencies (lowest picthes)
+	// Just analyse a proportion of all frequencies (lowest pitches)
 	let rangeProportion = 0.3
 		
 	let loop1 = () => {
@@ -731,7 +736,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter)
 		
 		let scale1text, scale2text, text1x, text1y, text2x, text2y
 		scale1text = "50%"
-		scale2text = "1 ms"
+		scale2text = C.scale.x == 0 ? "2 ms" : (C.scale.x == 1 ? "1ms" : (C.scale.x == 2 ? "0.2ms" : "2ms"))
 		text1x = 3/100 * width
 		text1y = 91.5/100 * height
 		text2x = 7/100 * width
@@ -775,8 +780,8 @@ let startAudio = () => {
 	F.gain.gain.value = 1
 	
 	// Create audio analyzer
-	F.analyser = new AnalyserNode(F.audioContext) // Created with FFT size of 2048 (2^11)
-	const bufferLength = F.analyser.frequencyBinCount // 1024
+	F.analyser = new AnalyserNode(F.audioContext, {fftSize: 4096}) // Default is FFT size of 2048 (2^11), we there ask for twice more data
+	const bufferLength = F.analyser.frequencyBinCount // == exactly half fftSize, so here 2048
 	F.timuDataArray = new Uint8Array(bufferLength) // Full of zeros (1024 == 2^10)
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
@@ -804,7 +809,7 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
+		F.osci.frequency.value = 30//1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
 	}, 500)
 	
 }

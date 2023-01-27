@@ -98,7 +98,7 @@ main section.template {
 }
 .canvas-container {
 	position: relative;
-	height: calc(100% - 60px);
+	height: calc(100% - 100px);
 }
 .canvas-container canvas {
 	position: absolute;
@@ -109,7 +109,7 @@ main section.template {
 	margin: auto;
 }
 .controls {
-	height: 60px;
+	height: 100px;
 	border: solid 1px white;
 	display: flex;
 	flex-flow: row;
@@ -148,13 +148,16 @@ main section.template {
 	opacity: .75;
 	font-size: 15px;
 }
-.control-tab.active .key-icon {
+.control-tab.active .key-icon,
+.control-tab .key-icon.active {
 	background: white;
 }
-.control-tab.active .key-icon::after {
+.control-tab.active .key-icon::after,
+.control-tab .key-icon.active::after {
 	color: black;
 }
-.control-tab.active .key-info {
+.control-tab.active .key-info,
+.control-tab .key-info.active {
 	opacity: 1;
 	text-shadow: white 0 0 3px;
 }
@@ -163,6 +166,36 @@ main section.template {
 }
 .control-tab:not(.active) .key-icon:hover::after {
 	color: black;
+}
+.arrows-control-tab {
+	position: relative;
+}
+.arrows-control-tab .key-icon {
+	position: absolute;
+	margin: 0;
+}
+.arrows-control-tab .key-icon[data-keycode="37"] {/* Left */
+	left: calc(50% - 11px - 25px - 30px);
+	top: calc(50% - 11px);
+	padding: 0px 2px 4px 2px;
+}
+.arrows-control-tab .key-icon[data-keycode="38"] {/* Up */
+	left: calc(50% - 11px + 0px - 30px);
+	top: calc(50% - 11px - 25px);
+	padding: 1px 0px 4px 5px;
+}
+.arrows-control-tab .key-icon[data-keycode="39"] {/* Right */
+	left: calc(50% - 11px + 25px - 30px);
+	top: calc(50% - 11px);
+	padding: 0px 2px 4px 2px;
+}
+.arrows-control-tab .key-icon[data-keycode="40"] {/* Down */
+	left: calc(50% - 11px + 0px - 30px);
+	top: calc(50% - 11px + 25px);
+	padding: 1px 0px 4px 5px;
+}
+.arrows-control-tab .key-info {
+	margin-left: 63px;
 }
 
 /* Specific */
