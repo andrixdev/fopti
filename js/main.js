@@ -25,7 +25,6 @@ let F = {
 		timefreq: false,
 		combined: false
 	}
-	
 }
 const log = console.log
 const dom = {
