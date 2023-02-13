@@ -2,8 +2,10 @@
  * Main script file for FOPTI project
  *
  * @author Alex Andrix
- * @date 2022
+ * @date 2022-2023
  */
+
+let myVerySpecialInputScaling = 0.95
 
 // Global variables in F namespace
 let F = {
@@ -223,7 +225,7 @@ let initOscilloscopeView = () => {
 				let yCore = height - height * timeData[i] / 255
 				let yScale = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 2 : 10)
 				let yGridScale = axesAreDrawn || gridIsDrawn ? 80/100 : 90/100
-				let y = height / 2 + yGridScale * yScale * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
+				let y = height / 2 + yGridScale * yScale * myVerySpecialInputScaling * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
 				
 				// Cap
 				y = Math.min(y, height / 2 + height * yGridScale / 2)
