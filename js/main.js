@@ -445,24 +445,16 @@ let initTimefreqView = () => {
 				
 				// Colors
 				let hue = 260 - sampleValue / 255 * 60
-				let lum = 0.3 + 0.6 * sampleValue / 255 * 100
-				let alpha = sampleValue / 255 * 0.7
+				let lum = 0.4 + 0.6 * sampleValue / 255 * 100
+				let alpha = sampleValue / 255 * 2.0
 				
 				// Clear previous (not painting black because of composite 'lighter' mode)
 				ctx1.clearRect(X - thickness, y, thickness, zoneHeight)
 				
 				// Fill!
 				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
-				ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
-				
-				// Draw a shadow circle around
 				ctx1.beginPath()
-				let radius = 0.7 * (zoneHeight + thickness)//Math.min(zoneHeight, thickness)//
-				radius = Math.min(Math.min(radius, 2 * zoneHeight), 2 * thickness)
-				
-				ctx1.arc(X - thickness / 2, y + zoneHeight / 2, radius, 0, 2 * Math.PI, false)
-				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha / 3 + ')'
-				ctx1.fill()
+				ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
 				ctx1.closePath()
 			}
 			
@@ -562,10 +554,10 @@ let initCombinedView = () => {
 				
 				let r = baseRadius + (maxRadius - baseRadius) * s / sections
 				
-				// Colors
+				// Colors				
 				let hue = 260 - sampleValue / 255 * 60
-				let lum = 0.3 + 0.6 * sampleValue / 255 * 100
-				let alpha = sampleValue / 255 * 0.7
+				let lum = 0.4 + 0.6 * sampleValue / 255 * 100
+				let alpha = sampleValue / 255 * 2.0
 				
 				// Draw new arc
 				ctx1.beginPath()
@@ -828,7 +820,7 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 30//1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
+		F.osci.frequency.value = 1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
 	}, 500)
 	
 }
