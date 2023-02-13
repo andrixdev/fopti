@@ -169,6 +169,8 @@ let initOscilloscopeView = () => {
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
+	let lastXscale = C.scale.x
+	let lastYscale = C.scale.y
 	
 	// Canvas time loop
 	let frame = 0
@@ -190,13 +192,21 @@ let initOscilloscopeView = () => {
 				axesAreDrawn = true
 			}
 			
-			// Maybe clear or draw grid
+			// Maybe clear or draw grid, then update scale memory
 			if (!C.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
 			} else if (C.gridToggle && !gridIsDrawn) {
-				drawGrid('oscilloscope', ctx3, width, height, 21, 6)
+				drawGrid('oscilloscope', ctx3, width, height, 21, 4)
 				gridIsDrawn = true
+			}
+			
+			// If scale has changed, redraw grid (and thus scales)
+			if (C.gridToggle && (lastXscale != C.scale.x || lastYscale != C.scale.y)) {
+				ctx3.clearRect(0, 0, width, height)
+				drawGrid('oscilloscope', ctx3, width, height, 21, 4)
+				lastXscale = C.scale.x
+				lastYscale = C.scale.y
 			}
 			
 			// Draw curve
@@ -211,13 +221,20 @@ let initOscilloscopeView = () => {
 			for (let i = 0; i < timeData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let yCore = height - height * timeData[i] / 255
-				let y = axesAreDrawn || gridIsDrawn ? height / 2 + 53/100 * (yCore - height / 2) : yCore // Signal can range up to max 53% of graph height
+				let yScale = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 2 : 10)
+				let yGridScale = axesAreDrawn || gridIsDrawn ? 80/100 : 90/100
+				let y = height / 2 + yGridScale * yScale * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
+				
+				// Cap
+				y = Math.min(y, height / 2 + height * yGridScale / 2)
+				y = Math.max(y, height / 2 - height * yGridScale / 2)
 				
 				if (i == 0) {
 					ctx1.moveTo(x, y)
 				} else {
 					ctx1.lineTo(x, y)
 				}
+				
 			}
 			ctx1.stroke()
 			ctx1.closePath()
@@ -726,21 +743,21 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter)
 		// Scales in the corner
 		// (whole X range corresponds to 21.28 ms of signal)
 		ctx.beginPath()
-		ctx.moveTo(5/100 * width, 97/100 * height)
-		ctx.lineTo(5/100 * width + vStep, 97/100 * height)
+		ctx.moveTo(5/100 * width, 95/100 * height)
+		ctx.lineTo(5/100 * width + vStep, 95/100 * height)
 		ctx.stroke()
-		ctx.moveTo(5/100 * width, 97/100 * height)
-		ctx.lineTo(5/100 * width, 97/100 * height - hStep)
+		ctx.moveTo(5/100 * width, 95/100 * height)
+		ctx.lineTo(5/100 * width, 95/100 * height - hStep)
 		ctx.stroke()
 		ctx.closePath()
 		
 		let scale1text, scale2text, text1x, text1y, text2x, text2y
-		scale1text = "50%"
-		scale2text = C.scale.x == 0 ? "2 ms" : (C.scale.x == 1 ? "1ms" : (C.scale.x == 2 ? "0.2ms" : "2ms"))
-		text1x = 3/100 * width
-		text1y = 91.5/100 * height
+		scale1text = C.scale.y == 0 ? "50%" : (C.scale.y == 1 ? "25%" : (C.scale.y == 2 ? "5%" : "50%"))
+		scale2text = C.scale.x == 0 ? "2 ms" : (C.scale.x == 1 ? "1 ms" : (C.scale.x == 2 ? "0.2 ms" : "2 ms"))
+		text1x = 2.5/100 * width
+		text1y = 87/100 * height
 		text2x = 7/100 * width
-		text2y = 100/100 * height
+		text2y = 98/100 * height
 		
 		ctx.textAlign = 'center'
 		ctx.fillText(scale1text, text1x, text1y)
