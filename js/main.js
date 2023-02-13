@@ -18,9 +18,17 @@ let F = {
 	frequDataArray: [],
 	isMikeOn: false,
 	isOscillatorOn: false,
-	timefreqBaseTime: undefined,
-	combinedBaseTime: undefined,
 	activeView: 'home',
+	timefreq: {
+		baseTime: undefined
+	},
+	combined: {
+		baseTime: undefined,
+		centerX: undefined,
+		centerY: undefined,
+		baseRadius: 100,
+		maxRadius: 400
+	},
 	viewIsInit: {
 		osci: false,
 		fft: false,
@@ -364,11 +372,11 @@ let initTimefreqView = () => {
 	let gridIsDrawn = false
 	
 	// Canvas time loop
-	F.timefreqBaseTime = new Date().getTime()
+	F.timefreq.baseTime = new Date().getTime()
 	let frame = 0,
 		lastX = 0,
 		X = 0,
-		lastTime = F.timefreqBaseTime,
+		lastTime = F.timefreq.baseTime,
 		radarMS = 4000, // ms
 		sections = 50,
 		zoneHeight = height / sections
@@ -388,16 +396,16 @@ let initTimefreqView = () => {
 				axesAreDrawn = false
 				if (!gridIsDrawn) {
 					ctx1.clearRect(0, 0, width, height)
-					F.timefreqBaseTime = new Date().getTime()
-					lastTime = F.timefreqBaseTime
+					F.timefreq.baseTime = new Date().getTime()
+					lastTime = F.timefreq.baseTime
 				}
 			} else if (C.axisToggle && !axesAreDrawn) {
 				drawAxes('timefreq', ctx2, width, height)
 				axesAreDrawn = true
 				if (!gridIsDrawn) {
 					ctx1.clearRect(0, 0, width, height)
-					F.timefreqBaseTime = new Date().getTime()
-					lastTime = F.timefreqBaseTime
+					F.timefreq.baseTime = new Date().getTime()
+					lastTime = F.timefreq.baseTime
 				}
 			}
 			
@@ -407,32 +415,32 @@ let initTimefreqView = () => {
 				gridIsDrawn = false
 				if (!axesAreDrawn) {
 					ctx1.clearRect(0, 0, width, height)
-					F.timefreqBaseTime = new Date().getTime()
-					lastTime = F.timefreqBaseTime
+					F.timefreq.baseTime = new Date().getTime()
+					lastTime = F.timefreq.baseTime
 				}
 			} else if (C.gridToggle && !gridIsDrawn) {
-				drawGrid('timefreq', ctx3, width, height, 24, 10)
+				drawGrid('timefreq', ctx3, width, height, 16, 12)
 				gridIsDrawn = true
 				if (!axesAreDrawn) {
 					ctx1.clearRect(0, 0, width, height)
-					F.timefreqBaseTime = new Date().getTime()
-					lastTime = F.timefreqBaseTime
+					F.timefreq.baseTime = new Date().getTime()
+					lastTime = F.timefreq.baseTime
 				}
 			}
 			
 			// Work on 'curve' canvas
-			if (lastTime == F.timefreqBaseTime) {
+			if (lastTime == F.timefreq.baseTime) {
 				// Means another view was active --> clear zone
 				ctx1.clearRect(0, 0, width, height)
 			}
 			let newTime = new Date().getTime()
 			
 			// Radar over X axis
-			let xCore = width * ((newTime - F.timefreqBaseTime) % radarMS) / radarMS
+			let xCore = width * ((newTime - F.timefreq.baseTime) % radarMS) / radarMS
 			let X = axesAreDrawn || gridIsDrawn ? 10/100 * width + 80/100 * xCore : xCore
 			
 			// Paint wider rectangles if refresh time is longer
-			let thickness = width * (newTime - lastTime) / radarMS
+			let thickness = width * (newTime - lastTime) / radarMS * (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100)
 			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -448,21 +456,22 @@ let initTimefreqView = () => {
 				let lum = 0.4 + 0.6 * sampleValue / 255 * 100
 				let alpha = sampleValue / 255 * 2.0
 				
-				// Clear previous (not painting black because of composite 'lighter' mode)
-				ctx1.clearRect(X - thickness, y, thickness, zoneHeight)
+				// Clear previous
+				ctx1.clearRect(X, y - zoneHeight, thickness + 1, zoneHeight)
 				
 				// Fill!
 				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
 				ctx1.beginPath()
-				ctx1.fillRect(X - thickness, y, thickness, zoneHeight)
+				let maxWidth = width * (axesAreDrawn || gridIsDrawn ? 90/100 : 100/100)
+				if (X + thickness < maxWidth) ctx1.fillRect(X, y - zoneHeight, thickness, zoneHeight)
 				ctx1.closePath()
 			}
 			
 			lastX = X
 			lastTime = newTime
 		} else {
-			F.timefreqBaseTime = new Date().getTime()
-			lastTime = F.timefreqBaseTime
+			F.timefreq.baseTime = new Date().getTime()
+			lastTime = F.timefreq.baseTime
 		}
 		
 		window.requestAnimationFrame(loop)
@@ -470,21 +479,23 @@ let initTimefreqView = () => {
 	window.requestAnimationFrame(loop)
 }
 let initCombinedView = () => {
-	let container = document.getElementById('combined-container')
+	let container = document.querySelector('#combined-container .canvas-container')
 	
 	let ctx1 = document.getElementById('combined-timefreq-canvas').getContext('2d')
 	let ctx2 = document.getElementById('combined-oscilloscope-canvas').getContext('2d')
 	let ctx3 = document.getElementById('combined-grid-canvas').getContext('2d')
 	let width1 = container.clientWidth
-	let height1 = Math.min(container.clientHeight, 500)
+	let height1 = container.clientHeight//Math.min(container.clientHeight, 500)
 	let width2 = 200
 	let height2 = 200
 	
 	// Radial radar
 	configureCanvas(ctx1, width1, height1)
 	ctx1.imageSmoothingEnabled = true
-	let centerX = width1 / 2
-	let centerY = height1 / 2
+	F.combined.centerX = width1 / 2
+	F.combined.centerY = height1 / 2
+	let centerX = F.combined.centerX
+	let centerY = F.combined.centerY
 	ctx1.fillStyle = 'black'
 	ctx1.fillRect(0, 0, width1, height1)
 	
@@ -509,15 +520,15 @@ let initCombinedView = () => {
 	ctx1.closePath()
 	
 	// Radial radar time loop
-	F.combinedBaseTime = new Date().getTime()
+	F.combined.baseTime = new Date().getTime()
 	let frame1 = 0,
 		lastTheta = 0,
 		theta = 0,
-		lastTime = F.combinedBaseTime,
+		lastTime = F.combined.baseTime,
 		radarMS = 5000, // ms
 		sections = 50,
-		baseRadius = 100,
-		maxRadius = 400,
+		baseRadius = F.combined.baseRadius,
+		maxRadius = F.combined.maxRadius,
 		zoneHeight = (maxRadius - baseRadius) / sections
 	
 	// Just analyse a proportion of all frequencies (lowest pitches)
@@ -534,7 +545,7 @@ let initCombinedView = () => {
 				ctx3.clearRect(0, 0, width1, height1)
 				gridIsDrawn = false
 			} else if (C.gridToggle && !gridIsDrawn) {
-				drawGrid('combined', ctx3, width1, height1, 21, 6, centerX, centerY)
+				drawGrid('combined', ctx3, width1, height1, 21, 6)
 				gridIsDrawn = true
 			}
 			
@@ -542,7 +553,7 @@ let initCombinedView = () => {
 			let newTime = new Date().getTime()
 			
 			// Radar over Theta
-			theta = 2 * Math.PI * ((newTime - F.combinedBaseTime) % radarMS) / radarMS
+			theta = 2 * Math.PI * ((newTime - F.combined.baseTime) % radarMS) / radarMS
 			
 			// Paint wider arcs (in theta) if refresh time is longer
 			let thetaRange = 2 * Math.PI * (newTime - lastTime) / radarMS
@@ -666,8 +677,8 @@ let drawAxes = (type, ctx, width, height) => {
 		text2x = 90/100 * width
 		text2y = 98/100 * height
 	} else if (type == 'timefreq') {
-		axis1name = "Frequency"
-		axis2name = "Time"
+		axis1name = "Frequency (kHz)"
+		axis2name = "Time (s)"
 		text1x = 10/100 * width
 		text1y = 6/100 * height
 		text2x = 95/100 * width
@@ -677,11 +688,11 @@ let drawAxes = (type, ctx, width, height) => {
 	ctx.fillText(axis1name, text1x, text1y) 
 	ctx.fillText(axis2name, text2x, text2y)
 }
-let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter) => {
+let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 	// type can be 'oscilloscope', 'fft', 'timefreq' or 'combined'
 	
-	let vStep, hStep
-	
+	// Grid
+	let vStep, hStep	
 	if (type != 'combined') {
 		// Vertical lines
 		vStep = 1 / vertiCuts * 80/100 * width
@@ -711,10 +722,10 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter)
 		let r2 = 600
 		for (let t = thetaStep; t < 2 * Math.PI; t += thetaStep) {
 			ctx.beginPath()
-			let x1 = xCenter + r1 * Math.cos(t)
-			let y1 = yCenter + r1 * Math.sin(t)
-			let x2 = xCenter + r2 * Math.cos(t)
-			let y2 = yCenter + r2 * Math.sin(t)
+			let x1 = F.combined.centerX + r1 * Math.cos(t)
+			let y1 = F.combined.centerY + r1 * Math.sin(t)
+			let x2 = F.combined.centerX + r2 * Math.cos(t)
+			let y2 = F.combined.centerY + r2 * Math.sin(t)
 			ctx.moveTo(x1, y1)
 			ctx.lineTo(x2, y2)
 			ctx.stroke()
@@ -722,11 +733,10 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter)
 		}
 		
 		// Orthoradial lines (circles)
-		let rStep = 30
-		for (let r = 0; r < 20; r++) {
-			let rad = 100 + r * rStep
+		let rStep = 50
+		for (let r = 100; r <= 600; r += rStep) {
 			ctx.beginPath()
-			ctx.arc(xCenter, yCenter, rad, 0, 2 * Math.PI, false)
+			ctx.arc(F.combined.centerX, F.combined.centerY, r, 0, 2 * Math.PI, false)
 			ctx.stroke()
 			ctx.closePath()
 		}
@@ -772,6 +782,17 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts, xCenter, yCenter)
 			ctx.textAlign = 'right'
 			ctx.fillText(-10 * h, 9/100 * width, y)
 		}
+	} else if (type == 'timefreq') {
+		// Vertical scales
+		let hStep = 1 / horiCuts * 80/100 * height
+		for (let h = 0; h <= horiCuts; h++) {
+			let y = 11.2/100 * height + h * hStep
+			ctx.textAlign = 'right'
+			ctx.fillText(Math.round(10 * (24 - 24 * h / horiCuts)) / 10, 9/100 * width, y)
+		}
+	} else if (type == 'combined') {
+		// Radial scales
+		
 	}
 	
 }

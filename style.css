@@ -98,7 +98,7 @@ main section.template {
 }
 .canvas-container {
 	position: relative;
-	height: calc(100% - 100px);
+	height: calc(100% - 101px);
 }
 .canvas-container canvas {
 	position: absolute;
@@ -196,6 +196,26 @@ main section.template {
 }
 .arrows-control-tab .key-info {
 	margin-left: 63px;
+}
+
+/* Arrow control overrides for Timefreq because we just have up and down arrow */
+#timefreq-container .arrows-control-tab .key-icon[data-keycode="38"] {/* Up */
+	left: calc(50% - 11px);
+	top: calc(50% - 11px - 25px);
+	padding: 1px 0px 4px 5px;
+}
+#timefreq-container .arrows-control-tab .key-icon[data-keycode="40"] {/* Down */
+	left: calc(50% - 11px);
+	top: calc(50% - 11px + 25px);
+	padding: 1px 0px 4px 5px;
+}
+#timefreq-container .arrows-control-tab .key-info {
+	margin-left: 0;
+}
+#timefreq-container .control-tab.active .key-info,
+#timefreq-container .control-tab .key-info.active {
+	opacity: .75;
+	text-shadow: none;
 }
 
 /* Specific */
