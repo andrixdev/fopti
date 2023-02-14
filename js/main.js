@@ -370,6 +370,7 @@ let initTimefreqView = () => {
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
+	let lastYscale = C.scale.y
 	
 	// Canvas time loop
 	F.timefreq.baseTime = new Date().getTime()
@@ -378,11 +379,8 @@ let initTimefreqView = () => {
 		X = 0,
 		lastTime = F.timefreq.baseTime,
 		radarMS = 4000, // ms
-		sections = 50,
+		sections = 64,
 		zoneHeight = height / sections
-	
-	// Just analyse a proportion of all frequencies (lowest picthes)
-	let rangeProportion = 0.3
 	
 	let loop = () => {
 		
@@ -407,6 +405,14 @@ let initTimefreqView = () => {
 					F.timefreq.baseTime = new Date().getTime()
 					lastTime = F.timefreq.baseTime
 				}
+			}
+			
+			// If scale has changed, clear curve grid (and thus scales)
+			if (lastYscale != C.scale.y) {
+				ctx1.clearRect(0, 0, width, height)
+				ctx3.clearRect(0, 0, width, height)
+				gridIsDrawn = false
+				lastYscale = C.scale.y
 			}
 			
 			// Maybe clear or draw grid
@@ -442,19 +448,26 @@ let initTimefreqView = () => {
 			// Paint wider rectangles if refresh time is longer
 			let thickness = width * (newTime - lastTime) / radarMS * (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100)
 			
+			// Just analyse a proportion of all frequencies (lowest picthes)
+			let rangeProportion = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 0.3 : (C.scale.y == 2 ? 0.1 : 1))
+			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
-				
-				let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
-				
+				let nextSectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * (s + 1))
+				let maxSampleValue = 0 // Better to use max than average because of freq data scarcity for perfect signals
+				for (let i = sectionSampleIndex; i < nextSectionSampleIndex; i++) {
+					let sampleValue = F.frequDataArray[i]
+					if (sampleValue > maxSampleValue) maxSampleValue = sampleValue
+				}
+					
 				// Position of colored zone
 				let yCore = height - height * s / sections
 				let y = axesAreDrawn || gridIsDrawn ? 10/100 * height + 80/100 * yCore : yCore
 				
 				// Colors
-				let hue = 260 - sampleValue / 255 * 60
-				let lum = 0.4 + 0.6 * sampleValue / 255 * 100
-				let alpha = sampleValue / 255 * 2.0
+				let hue = 260 - maxSampleValue / 255 * 60
+				let lum = 0.4 + 0.6 * maxSampleValue / 255 * 100
+				let alpha = maxSampleValue / 255 * 2.0
 				
 				// Clear previous
 				ctx1.clearRect(X, y - zoneHeight, thickness + 1, zoneHeight)
@@ -786,9 +799,10 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		// Vertical scales
 		let hStep = 1 / horiCuts * 80/100 * height
 		for (let h = 0; h <= horiCuts; h++) {
-			let y = 11.2/100 * height + h * hStep
+			let y = 91.0/100 * height - h * hStep
 			ctx.textAlign = 'right'
-			ctx.fillText(Math.round(10 * (24 - 24 * h / horiCuts)) / 10, 9/100 * width, y)
+			let step = h / horiCuts * (C.scale.y == 0 ? 24 : (C.scale.y == 1 ? 24/3 : (C.scale.y == 2 ? 24/10 : 24)))
+			ctx.fillText(Math.round(10 * step) / 10, 9/100 * width, y)
 		}
 	} else if (type == 'combined') {
 		// Radial scales
@@ -804,7 +818,7 @@ let startAudio = () => {
 	// Create oscillator source node
 	F.osci = new OscillatorNode(F.audioContext, {
 		frequency: 440,
-		type: "sine" // "sine", "square", "sawtooth", "triangle"
+		type: "sawtooth" // "sine", "square", "sawtooth", "triangle"
 	})
 	
 	// Create gain node
@@ -818,7 +832,7 @@ let startAudio = () => {
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
 	// Calibrate reactivity (more or less averaged with previous value), 0.8 is default, 0 is not averaged and thus super reactive, and 1 the maximum
-	F.analyser.smoothingTimeConstant = 0.1
+	F.analyser.smoothingTimeConstant = 0.2
 	
 	F.analyser.minDecibels = -100
 	F.analyser.maxDecibels = 0
@@ -841,8 +855,8 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 1000 + 100 * Math.floor(30 * Math.random())//2100 + 2000 * Math.sin(t / 3)
-	}, 500)
+		F.osci.frequency.value = 2000 + 200 * Math.sin(t / 0.2)//0 + 100 * Math.pow(2, Math.floor(80 * Math.random()) / 12)
+	}, 800)
 	
 }
 let startOscillator = () => {
