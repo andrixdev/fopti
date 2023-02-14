@@ -27,7 +27,7 @@ let F = {
 		centerX: undefined,
 		centerY: undefined,
 		baseRadius: 100,
-		maxRadius: 400
+		maxRadius: 600
 	},
 	viewIsInit: {
 		osci: false,
@@ -510,6 +510,7 @@ let initCombinedView = () => {
 	let centerX = F.combined.centerX
 	let centerY = F.combined.centerY
 	ctx1.fillStyle = 'black'
+	ctx1.strokeStyle = 'white'
 	ctx1.fillRect(0, 0, width1, height1)
 	
 	// Tiny oscilloscope
@@ -525,14 +526,7 @@ let initCombinedView = () => {
 	ctx3.font = '13px Raleway'
 	
 	let gridIsDrawn = false
-	
-	// Central circle on ctx1 to host oscilloscope (ctx2)
-	ctx1.beginPath()
-	ctx1.strokeStyle = 'white'
-	ctx1.lineWidth = 4
-	ctx1.arc(centerX, centerY, 98, 0, 2 * Math.PI, false)
-	ctx1.stroke()
-	ctx1.closePath()
+	let lastYscale = C.scale.y
 	
 	// Radial radar time loop
 	F.combined.baseTime = new Date().getTime()
@@ -546,14 +540,19 @@ let initCombinedView = () => {
 		maxRadius = F.combined.maxRadius,
 		zoneHeight = (maxRadius - baseRadius) / sections
 	
-	// Just analyse a proportion of all frequencies (lowest pitches)
-	let rangeProportion = 0.3
-		
 	let loop1 = () => {
 		
 		// Work on canvases only if view is active
 		if (F.activeView == 'combined') {
 			frame1++
+			
+			// If scale has changed, clear curve grid (and thus scales)
+			if (lastYscale != C.scale.y) {
+				ctx1.clearRect(0, 0, width1, height1)
+				ctx3.clearRect(0, 0, width1, height1)
+				gridIsDrawn = false
+				lastYscale = C.scale.y
+			}
 			
 			// Maybe clear or draw grid
 			if (!C.gridToggle && gridIsDrawn) {
@@ -573,17 +572,24 @@ let initCombinedView = () => {
 			// Paint wider arcs (in theta) if refresh time is longer
 			let thetaRange = 2 * Math.PI * (newTime - lastTime) / radarMS
 			
+			// Just analyse a proportion of all frequencies (lowest picthes)
+			let rangeProportion = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 0.3 : (C.scale.y == 2 ? 0.1 : 1))
+			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
-				
-				let sampleValue = F.frequDataArray[sectionSampleIndex] // Not averaged or anything, just probed
+				let nextSectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * (s + 1))
+				let maxSampleValue = 0 // Better to use max than average because of freq data scarcity for perfect signals
+				for (let i = sectionSampleIndex; i < nextSectionSampleIndex; i++) {
+					let sampleValue = F.frequDataArray[i]
+					if (sampleValue > maxSampleValue) maxSampleValue = sampleValue
+				}
 				
 				let r = baseRadius + (maxRadius - baseRadius) * s / sections
 				
 				// Colors				
-				let hue = 260 - sampleValue / 255 * 60
-				let lum = 0.4 + 0.6 * sampleValue / 255 * 100
-				let alpha = sampleValue / 255 * 2.0
+				let hue = 260 - maxSampleValue / 255 * 60
+				let lum = 0.4 + 0.6 * maxSampleValue / 255 * 100
+				let alpha = maxSampleValue / 255 * 2.0
 				
 				// Draw new arc
 				ctx1.beginPath()
@@ -611,7 +617,17 @@ let initCombinedView = () => {
 			frame2++
 			
 			ctx2.clearRect(0, 0, width2, height2)
+			
+			// Central circle that contains oscilloscope
 			ctx2.beginPath()
+			ctx2.lineWidth = 4
+			ctx2.strokeStyle = 'white'
+			ctx2.arc(width2 / 2, height2 / 2, 98, 0, 2 * Math.PI, false)
+			ctx2.stroke()
+			ctx2.closePath()
+			
+			ctx2.beginPath()
+			ctx2.lineWidth = 1
 			
 			let l = F.timuDataArray.length,
 				step = width2 / l
@@ -627,6 +643,7 @@ let initCombinedView = () => {
 			}
 			
 			ctx2.stroke()
+			ctx2.closePath()
 		}
 		
 		window.requestAnimationFrame(loop2)

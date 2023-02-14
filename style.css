@@ -199,21 +199,26 @@ main section.template {
 }
 
 /* Arrow control overrides for Timefreq because we just have up and down arrow */
-#timefreq-container .arrows-control-tab .key-icon[data-keycode="38"] {/* Up */
+#timefreq-container .arrows-control-tab .key-icon[data-keycode="38"],
+#combined-container .arrows-control-tab .key-icon[data-keycode="38"] {/* Up */
 	left: calc(50% - 11px);
 	top: calc(50% - 11px - 25px);
 	padding: 1px 0px 4px 5px;
 }
-#timefreq-container .arrows-control-tab .key-icon[data-keycode="40"] {/* Down */
+#timefreq-container .arrows-control-tab .key-icon[data-keycode="40"],
+#combined-container .arrows-control-tab .key-icon[data-keycode="40"] {/* Down */
 	left: calc(50% - 11px);
 	top: calc(50% - 11px + 25px);
 	padding: 1px 0px 4px 5px;
 }
-#timefreq-container .arrows-control-tab .key-info {
+#timefreq-container .arrows-control-tab .key-info,
+#combined-container .arrows-control-tab .key-info {
 	margin-left: 0;
 }
 #timefreq-container .control-tab.active .key-info,
-#timefreq-container .control-tab .key-info.active {
+#timefreq-container .control-tab .key-info.active,
+#combined-container .control-tab.active .key-info,
+#combined-container .control-tab .key-info.active {
 	opacity: .75;
 	text-shadow: none;
 }
