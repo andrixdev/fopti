@@ -521,6 +521,8 @@ let initCombinedView = () => {
 	configureCanvas(ctx3, width1, height1)
 	ctx3.lineWidth = 1
 	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+	ctx3.fillStyle = 'rgba(255, 255, 255, 0.3)'
+	ctx3.font = '13px Raleway'
 	
 	let gridIsDrawn = false
 	
@@ -558,7 +560,7 @@ let initCombinedView = () => {
 				ctx3.clearRect(0, 0, width1, height1)
 				gridIsDrawn = false
 			} else if (C.gridToggle && !gridIsDrawn) {
-				drawGrid('combined', ctx3, width1, height1, 21, 6)
+				drawGrid('combined', ctx3, width1, height1)
 				gridIsDrawn = true
 			}
 			
@@ -746,7 +748,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		}
 		
 		// Orthoradial lines (circles)
-		let rStep = 50
+		let rStep = 500/12
 		for (let r = 100; r <= 600; r += rStep) {
 			ctx.beginPath()
 			ctx.arc(F.combined.centerX, F.combined.centerY, r, 0, 2 * Math.PI, false)
@@ -805,8 +807,14 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 			ctx.fillText(Math.round(10 * step) / 10, 9/100 * width, y)
 		}
 	} else if (type == 'combined') {
-		// Radial scales
-		
+		// Radial scales (one per circle)
+		let rMin = 100, rMax = 600, iMax = 12, maxFreq = C.scale.y == 0 ? 24 : (C.scale.y == 1 ? 24/3 : (C.scale.y == 2 ? 24/10 : 24))
+		for (let i = 0; i <= iMax; i++) {
+			let r = rMin + i / iMax * (rMax - rMin)
+			let freq = 0 + i / iMax * maxFreq
+			ctx.textAlign = 'left'
+			ctx.fillText(Math.floor(freq * 10) / 10, F.combined.centerX + r + 4, F.combined.centerY - 6)
+		}
 	}
 	
 }
