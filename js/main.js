@@ -842,7 +842,7 @@ let startAudio = () => {
 	// Create oscillator source node
 	F.osci = new OscillatorNode(F.audioContext, {
 		frequency: 440,
-		type: "sawtooth" // "sine", "square", "sawtooth", "triangle"
+		type: "triangle" // "sine", "square", "sawtooth", "triangle"
 	})
 	
 	// Create gain node
@@ -879,8 +879,8 @@ let startAudio = () => {
 	let t = 0
 	setInterval(() => {
 		t++
-		F.osci.frequency.value = 2000 + 200 * Math.sin(t / 0.2)//0 + 100 * Math.pow(2, Math.floor(80 * Math.random()) / 12)
-	}, 800)
+		F.osci.frequency.value = 2500 + 1500 * Math.sin(t * 0.5)//0 + 100 * Math.pow(2, Math.floor(80 * Math.random()) / 12)
+	}, 500)
 	
 }
 let startOscillator = () => {

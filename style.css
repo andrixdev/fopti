@@ -237,17 +237,49 @@ main section.template {
 	width: 30px;
 	animation: rotate 2s infinite;
 }
+
 #home-container {
 	padding: 6rem 2rem;
 	height: calc(100% - 2 * 6rem);
 }
-#home-container p,
-#home-container h1 {
+#home-container p {
 	text-align: center;
 }
-#home-container h1 {
+#fopti-header {
+	text-align: center;
+	padding-right: 50px;
+}
+#fopti-header img,
+#fopti-header #fopti-text {
+	display: inline-block;
+	vertical-align: middle;
+}
+#fopti-header h1 {
 	font-size: 2.5rem;
 }
+#fopti-header #fopti-text h1,
+#fopti-header #fopti-text p {
+	text-align: left;
+	margin: 0;
+}
+@media (max-width: 800px) {
+	#fopti-header {
+		text-align: center;
+		padding-right: 0px;
+	}
+	#fopti-header #fopti-text h1,
+	#fopti-header #fopti-text p {
+		text-align: center;
+	}
+}
+#fopti-header #fopti-text p {
+	margin-bottom: 1rem;
+}
+#home-container #fopti-header img {
+	width: 160px;
+}
+
+
 #home-container a {
 	text-decoration: none;
 }
