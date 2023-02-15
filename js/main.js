@@ -19,6 +19,18 @@ let F = {
 	isMikeOn: false,
 	isOscillatorOn: false,
 	activeView: 'home',
+	viewIsInit: {
+		osci: false,
+		fft: false,
+		timefreq: false,
+		combined: false
+	},
+	oscilloscope: {
+		lineColor: 'hsla(140, 100%, 60%, 1)'
+	},
+	fft: {
+		lineColor: 'hsla(0, 100%, 55%, 1)'
+	},
 	timefreq: {
 		baseTime: undefined
 	},
@@ -29,11 +41,10 @@ let F = {
 		baseRadius: 100,
 		maxRadius: 600
 	},
-	viewIsInit: {
-		osci: false,
-		fft: false,
-		timefreq: false,
-		combined: false
+	grids: {
+		axesColor: 'white',
+		scalesStrokeColor: 'rgba(255, 255, 255, 0.3)',
+		scalesTextColor: 'rgba(255, 255, 255, 0.6)'
 	}
 }
 const log = console.log
@@ -89,7 +100,6 @@ let setActiveTab = (node) => {
 	node.classList = 'tab active'
 }
 let initNavAndViewMechanics = () => {
-	
 	document.getElementById('home').addEventListener('click', (ev) => {
 		loadView('home')
 		resetActivatedTab()
@@ -146,6 +156,7 @@ let configureCanvas = (ctx, width, height) => {
 	ctx.canvas.style.width = width + "px"
 	ctx.canvas.style.height = height + "px"
 	ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+	ctx.lineWidth = 1
 }
 
 let initOscilloscopeView = () => {
@@ -160,21 +171,18 @@ let initOscilloscopeView = () => {
 	
 	// Canvas configurations
 	configureCanvas(ctx1, width, height)
-	ctx1.lineWidth = 1
-	ctx1.strokeStyle = 'hsla(140, 100%, 60%, 1)'
+	ctx1.strokeStyle = F.oscilloscope.lineColor
 	
 	configureCanvas(ctx2, width, height)
-	ctx2.lineWidth = 1
-	ctx2.strokeStyle = 'white'
-	ctx2.fillStyle = 'white'
+	ctx2.strokeStyle = F.grids.axesColor
+	ctx2.fillStyle = F.grids.axesColor
 	ctx2.font = '15px Raleway'
 	ctx2.textAlign = 'center'
 	
 	configureCanvas(ctx3, width, height)
-	ctx3.lineWidth = 1
-	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.4)'
-	ctx3.fillStyle = 'white'
-	ctx3.font = '15px Raleway'
+	ctx3.strokeStyle = F.grids.scalesStrokeColor
+	ctx3.fillStyle = F.grids.scalesTextColor
+	ctx3.font = '13px Raleway'
 	ctx3.textAlign = 'center'
 	
 	let axesAreDrawn = false
@@ -202,19 +210,20 @@ let initOscilloscopeView = () => {
 				axesAreDrawn = true
 			}
 			
+			let gridVertiCuts = C.scale.x == 0 ? 20 : (C.scale.x == 1 ? 10 : (C.scale.x == 2 ? 2 : 20))
 			// Maybe clear or draw grid, then update scale memory
 			if (!C.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
 			} else if (C.gridToggle && !gridIsDrawn) {
-				drawGrid('oscilloscope', ctx3, width, height, 21, 4)
+				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
 				gridIsDrawn = true
 			}
 			
 			// If scale has changed, redraw grid (and thus scales)
 			if (C.gridToggle && (lastXscale != C.scale.x || lastYscale != C.scale.y)) {
 				ctx3.clearRect(0, 0, width, height)
-				drawGrid('oscilloscope', ctx3, width, height, 21, 4)
+				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
 				lastXscale = C.scale.x
 				lastYscale = C.scale.y
 			}
@@ -226,12 +235,12 @@ let initOscilloscopeView = () => {
 			let timeData = F.timuDataArray // Full 2048 array
 			// Chop down array if we have zoomed scale to keep just the first values (most recent milliseconds of signal)
 			let chopFactor = C.scale.x == 0 ? 1 : (C.scale.x == 1 ? 2 : (C.scale.x == 2 ? 10 : 1))
+			let yScale = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 2 : 10)
 			timeData = timeData.slice(0, timeData.length / chopFactor)
 			let increment = C.precisionToggle ? 1 : Math.floor(timeData.length / 200) // Draw all values or just 200 values
 			for (let i = 0; i < timeData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let yCore = height - height * timeData[i] / 255
-				let yScale = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 2 : 10)
 				let yGridScale = axesAreDrawn || gridIsDrawn ? 80/100 : 90/100
 				let y = height / 2 + yGridScale * yScale * myVerySpecialInputScaling * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
 				
@@ -254,7 +263,6 @@ let initOscilloscopeView = () => {
 		window.requestAnimationFrame(loop)
 	}
 	window.requestAnimationFrame(loop)
-	
 }
 let initFFTView = () => {
 	// Canvas setup
@@ -268,20 +276,17 @@ let initFFTView = () => {
 	
 	// Canvas configuration
 	configureCanvas(ctx1, width, height)
-	ctx1.lineWidth = 1
-	ctx1.strokeStyle = 'hsla(0, 100%, 55%, 1)'
+	ctx1.strokeStyle = F.fft.lineColor
 	
 	configureCanvas(ctx2, width, height)
-	ctx2.lineWidth = 1
-	ctx2.strokeStyle = 'white'
-	ctx2.fillStyle = 'white'
+	ctx2.strokeStyle = F.grids.axesColor
+	ctx2.fillStyle = F.grids.axesColor
 	ctx2.font = '15px Raleway'
 	ctx2.textAlign = 'center'
 	
 	configureCanvas(ctx3, width, height)
-	ctx3.lineWidth = 1
-	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-	ctx3.fillStyle = 'rgba(255, 255, 255, 0.6)'
+	ctx3.strokeStyle = F.grids.scalesStrokeColor
+	ctx3.fillStyle = F.grids.scalesTextColor
 	ctx3.font = '13px Raleway'
 	
 	let axesAreDrawn = false
@@ -356,16 +361,14 @@ let initTimefreqView = () => {
 	//ctx1.filter = 'contrast(500%)'//'blur(2px) contrast(500%)'; /!\ Adds significant lag
 	
 	configureCanvas(ctx2, width, height)
-	ctx2.lineWidth = 1
-	ctx2.strokeStyle = 'white'
-	ctx2.fillStyle = 'white'
+	ctx2.strokeStyle = F.grids.axesColor
+	ctx2.fillStyle = F.grids.axesColor
 	ctx2.font = '15px Raleway'
 	ctx2.textAlign = 'center'
 	
 	configureCanvas(ctx3, width, height)
-	ctx3.lineWidth = 1
-	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-	ctx3.fillStyle = 'rgba(255, 255, 255, 0.6)'
+	ctx3.strokeStyle = F.grids.scalesStrokeColor
+	ctx3.fillStyle = F.grids.scalesTextColor
 	ctx3.font = '13px Raleway'
 	
 	let axesAreDrawn = false
@@ -515,14 +518,12 @@ let initCombinedView = () => {
 	
 	// Tiny oscilloscope
 	configureCanvas(ctx2, width2, height2)
-	ctx2.lineWidth = 1
 	ctx2.strokeStyle = 'white'
 	
 	// Grid
 	configureCanvas(ctx3, width1, height1)
-	ctx3.lineWidth = 1
-	ctx3.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-	ctx3.fillStyle = 'rgba(255, 255, 255, 0.3)'
+	ctx3.strokeStyle = F.grids.scalesStrokeColor
+	ctx3.fillStyle = F.grids.scalesTextColor
 	ctx3.font = '13px Raleway'
 	
 	let gridIsDrawn = false
@@ -695,8 +696,8 @@ let drawAxes = (type, ctx, width, height) => {
 	// Axes names
 	let axis1name, axis2name, text1x, text1y, text2x, text2y
 	if (type == 'oscilloscope') {
-		axis1name = "Amplitude"
-		axis2name = "Time"
+		axis1name = "Value (%)"
+		axis2name = "Time (ms)"
 		text1x = 90/100 * width
 		text1y = 6/100 * height
 		text2x = 95/100 * width
@@ -776,28 +777,24 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 	
 	// Scales
 	if (type == 'oscilloscope') {
-		// Scales in the corner
-		// (whole X range corresponds to 21.28 ms of signal)
-		ctx.beginPath()
-		ctx.moveTo(5/100 * width, 95/100 * height)
-		ctx.lineTo(5/100 * width + vStep, 95/100 * height)
-		ctx.stroke()
-		ctx.moveTo(5/100 * width, 95/100 * height)
-		ctx.lineTo(5/100 * width, 95/100 * height - hStep)
-		ctx.stroke()
-		ctx.closePath()
-		
-		let scale1text, scale2text, text1x, text1y, text2x, text2y
-		scale1text = C.scale.y == 0 ? "50%" : (C.scale.y == 1 ? "25%" : (C.scale.y == 2 ? "5%" : "50%"))
-		scale2text = C.scale.x == 0 ? "2 ms" : (C.scale.x == 1 ? "1 ms" : (C.scale.x == 2 ? "0.2 ms" : "2 ms"))
-		text1x = 2.5/100 * width
-		text1y = 87/100 * height
-		text2x = 7/100 * width
-		text2y = 98/100 * height
-		
-		ctx.textAlign = 'center'
-		ctx.fillText(scale1text, text1x, text1y)
-		ctx.fillText(scale2text, text2x, text2y)
+		// Horizontal scales
+		let vStep = 1 / vertiCuts * 80/100 * width
+		for (let v = 0; v <= vertiCuts; v++) {
+			let x = 10/100 * width + v * vStep
+			ctx.textAlign = 'center'
+			let text = 0 - 40 * (vertiCuts - v) / vertiCuts// unzoomed graph spans 40ms
+			text *= C.scale.x == 0 ? 1 : (C.scale.x == 1 ? 1/2 : (C.scale.x == 2 ? 1/10 : (1)))
+			ctx.fillText(text, x, 93.5/100 * height)
+		}
+		// Vertical scales
+		let hStep = 1 / horiCuts * 80/100 * height
+		for (let h = 0; h <= horiCuts; h++) {
+			let y = 10.8/100 * height + h * hStep
+			ctx.textAlign = 'right'
+			let text = Math.abs(Math.round(100 * (horiCuts - 2*h) / horiCuts))
+			text *= C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 1/2 : (C.scale.y == 2 ? 1/10 : (1)))
+			ctx.fillText(text, 9/100 * width, y)
+		}
 	} else if (type == 'fft') {
 		// Horizontal scales
 		let vStep = 1 / vertiCuts * 80/100 * width
@@ -806,7 +803,6 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 			ctx.textAlign = 'center'
 			ctx.fillText(v, x, 93.5/100 * height)
 		}
-		
 		// Vertical scales
 		let hStep = 1 / horiCuts * 80/100 * height
 		for (let h = 0; h <= horiCuts; h++) {
