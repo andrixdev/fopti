@@ -17,7 +17,9 @@ If you wish to amplify or diminish input signal on your personal implementation 
 - Add calibration multiplicative factor for input signal, with howto indications in README.md  
 - Add controls for vertical and horizontal scales (oscilloscope, timefreq & combined)  
 - Clean up timefreq graph visually overflowing data  
+- Controls decoupling on all views
+- Vary grid resolutions for different scales
 
 ## Remaining tasks
-- Vary grid resolutions for different scales
-- Try full refresh and full data flow on Timefreq view  
+
+- Flow mode on Timefreq view  

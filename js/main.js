@@ -211,19 +211,20 @@ let initOscilloscopeView = () => {
 			}
 			
 			let gridVertiCuts = C.oscilloscope.scale.x == 0 ? 20 : (C.oscilloscope.scale.x == 1 ? 10 : 2)
-			// Maybe clear or draw grid, then update scale memory
+			let gridHoriCuts = C.oscilloscope.scale.y == 0 ? 8 : (C.oscilloscope.scale.y == 1 ? 6 : 4)
+			// Maybe clear or draw grid
 			if (!C.oscilloscope.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
 			} else if (C.oscilloscope.gridToggle && !gridIsDrawn) {
-				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
+				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, gridHoriCuts)
 				gridIsDrawn = true
 			}
 			
 			// If scale has changed, redraw grid (and thus scales)
 			if (C.oscilloscope.gridToggle && (lastXscale != C.oscilloscope.scale.x || lastYscale != C.oscilloscope.scale.y)) {
 				ctx3.clearRect(0, 0, width, height)
-				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
+				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, gridHoriCuts)
 				lastXscale = C.oscilloscope.scale.x
 				lastYscale = C.oscilloscope.scale.y
 			}
@@ -428,7 +429,8 @@ let initTimefreqView = () => {
 					lastTime = F.timefreq.baseTime
 				}
 			} else if (C.timefreq.gridToggle && !gridIsDrawn) {
-				drawGrid('timefreq', ctx3, width, height, 16, 12)
+				let gridHoriCuts = C.timefreq.scale.y == 0 ? 12 : (C.timefreq.scale.y == 1 ? 8 : 4)
+				drawGrid('timefreq', ctx3, width, height, 16, gridHoriCuts)
 				gridIsDrawn = true
 				if (!axesAreDrawn) {
 					ctx1.clearRect(0, 0, width, height)
@@ -766,8 +768,9 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		}
 		
 		// Orthoradial lines (circles)
-		let rStep = 500/12
-		for (let r = 100; r <= 600; r += rStep) {
+		let rMin = 100, rMax = 600, iMax = C.combined.scale.y == 0 ? 12 : (C.combined.scale.y == 1 ? 8 : 4)
+		for (let i = 0; i <= iMax; i++) {
+			let r = rMin + i / iMax * (rMax - rMin)
 			ctx.beginPath()
 			ctx.arc(F.combined.centerX, F.combined.centerY, r, 0, 2 * Math.PI, false)
 			ctx.stroke()
@@ -821,7 +824,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		}
 	} else if (type == 'combined') {
 		// Radial scales (one per circle)
-		let rMin = 100, rMax = 600, iMax = 12, maxFreq = C.combined.scale.y == 0 ? 24 : (C.combined.scale.y == 1 ? 24/3 : 24/10)
+		let rMin = 100, rMax = 600, iMax = C.combined.scale.y == 0 ? 12 : (C.combined.scale.y == 1 ? 8 : 4), maxFreq = C.combined.scale.y == 0 ? 24 : (C.combined.scale.y == 1 ? 8 : 2.4)
 		for (let i = 0; i <= iMax; i++) {
 			let r = rMin + i / iMax * (rMax - rMin)
 			let freq = 0 + i / iMax * maxFreq
