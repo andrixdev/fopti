@@ -187,8 +187,8 @@ let initOscilloscopeView = () => {
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
-	let lastXscale = C.scale.x
-	let lastYscale = C.scale.y
+	let lastXscale = C.oscilloscope.scale.x
+	let lastYscale = C.oscilloscope.scale.y
 	
 	// Canvas time loop
 	let frame = 0
@@ -202,30 +202,30 @@ let initOscilloscopeView = () => {
 			ctx1.clearRect(0, 0, width, height)
 		
 			// Maybe clear or draw axes
-			if (!C.axisToggle && axesAreDrawn) {
+			if (!C.oscilloscope.axisToggle && axesAreDrawn) {
 				ctx2.clearRect(0, 0, width, height)
 				axesAreDrawn = false
-			} else if (C.axisToggle && !axesAreDrawn) {
+			} else if (C.oscilloscope.axisToggle && !axesAreDrawn) {
 				drawAxes('oscilloscope', ctx2, width, height)
 				axesAreDrawn = true
 			}
 			
-			let gridVertiCuts = C.scale.x == 0 ? 20 : (C.scale.x == 1 ? 10 : (C.scale.x == 2 ? 2 : 20))
+			let gridVertiCuts = C.oscilloscope.scale.x == 0 ? 20 : (C.oscilloscope.scale.x == 1 ? 10 : 2)
 			// Maybe clear or draw grid, then update scale memory
-			if (!C.gridToggle && gridIsDrawn) {
+			if (!C.oscilloscope.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
-			} else if (C.gridToggle && !gridIsDrawn) {
+			} else if (C.oscilloscope.gridToggle && !gridIsDrawn) {
 				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
 				gridIsDrawn = true
 			}
 			
 			// If scale has changed, redraw grid (and thus scales)
-			if (C.gridToggle && (lastXscale != C.scale.x || lastYscale != C.scale.y)) {
+			if (C.oscilloscope.gridToggle && (lastXscale != C.oscilloscope.scale.x || lastYscale != C.oscilloscope.scale.y)) {
 				ctx3.clearRect(0, 0, width, height)
 				drawGrid('oscilloscope', ctx3, width, height, gridVertiCuts, 4)
-				lastXscale = C.scale.x
-				lastYscale = C.scale.y
+				lastXscale = C.oscilloscope.scale.x
+				lastYscale = C.oscilloscope.scale.y
 			}
 			
 			// Draw curve
@@ -234,10 +234,10 @@ let initOscilloscopeView = () => {
 			
 			let timeData = F.timuDataArray // Full 2048 array
 			// Chop down array if we have zoomed scale to keep just the first values (most recent milliseconds of signal)
-			let chopFactor = C.scale.x == 0 ? 1 : (C.scale.x == 1 ? 2 : (C.scale.x == 2 ? 10 : 1))
-			let yScale = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 2 : 10)
+			let chopFactor = C.oscilloscope.scale.x == 0 ? 1 : (C.oscilloscope.scale.x == 1 ? 2 : 10)
+			let yScale = C.oscilloscope.scale.y == 0 ? 1 : (C.oscilloscope.scale.y == 1 ? 2 : 10)
 			timeData = timeData.slice(0, timeData.length / chopFactor)
-			let increment = C.precisionToggle ? 1 : Math.floor(timeData.length / 200) // Draw all values or just 200 values
+			let increment = C.oscilloscope.precisionToggle ? 1 : Math.floor(timeData.length / 200) // Draw all values or just 200 values
 			for (let i = 0; i < timeData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let yCore = height - height * timeData[i] / 255
@@ -304,19 +304,19 @@ let initFFTView = () => {
 			ctx1.clearRect(0, 0, width, height)
 			
 			// Maybe clear or draw axes
-			if (!C.axisToggle && axesAreDrawn) {
+			if (!C.fft.axisToggle && axesAreDrawn) {
 				ctx2.clearRect(0, 0, width, height)
 				axesAreDrawn = false
-			} else if (C.axisToggle && !axesAreDrawn) {
+			} else if (C.fft.axisToggle && !axesAreDrawn) {
 				drawAxes('fft', ctx2, width, height)
 				axesAreDrawn = true
 			}
 			
 			// Maybe clear or draw grid
-			if (!C.gridToggle && gridIsDrawn) {
+			if (!C.fft.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
-			} else if (C.gridToggle && !gridIsDrawn) {
+			} else if (C.fft.gridToggle && !gridIsDrawn) {
 				drawGrid('fft', ctx3, width, height, 24, 10)
 				gridIsDrawn = true
 			}
@@ -324,7 +324,7 @@ let initFFTView = () => {
 			// Draw curve
 			ctx1.beginPath()
 			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
-			let increment = C.precisionToggle ? 1 : 5 // There are 2048 values to draw. We draw only 1/5 of them unless precision+ mode is active
+			let increment = C.fft.precisionToggle ? 1 : 5 // There are 2048 values to draw. We draw only 1/5 of them unless precision+ mode is active
 			for (let i = 0; i < F.frequDataArray.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
 				let y = (axesAreDrawn || gridIsDrawn) ?
@@ -373,7 +373,7 @@ let initTimefreqView = () => {
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
-	let lastYscale = C.scale.y
+	let lastYscale = C.timefreq.scale.y
 	
 	// Canvas time loop
 	F.timefreq.baseTime = new Date().getTime()
@@ -392,7 +392,7 @@ let initTimefreqView = () => {
 			frame++
 			
 			// Maybe clear or draw axes
-			if (!C.axisToggle && axesAreDrawn) {
+			if (!C.timefreq.axisToggle && axesAreDrawn) {
 				ctx2.clearRect(0, 0, width, height)
 				axesAreDrawn = false
 				if (!gridIsDrawn) {
@@ -400,7 +400,7 @@ let initTimefreqView = () => {
 					F.timefreq.baseTime = new Date().getTime()
 					lastTime = F.timefreq.baseTime
 				}
-			} else if (C.axisToggle && !axesAreDrawn) {
+			} else if (C.timefreq.axisToggle && !axesAreDrawn) {
 				drawAxes('timefreq', ctx2, width, height)
 				axesAreDrawn = true
 				if (!gridIsDrawn) {
@@ -411,15 +411,15 @@ let initTimefreqView = () => {
 			}
 			
 			// If scale has changed, clear curve grid (and thus scales)
-			if (lastYscale != C.scale.y) {
+			if (lastYscale != C.timefreq.scale.y) {
 				ctx1.clearRect(0, 0, width, height)
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
-				lastYscale = C.scale.y
+				lastYscale = C.timefreq.scale.y
 			}
 			
 			// Maybe clear or draw grid
-			if (!C.gridToggle && gridIsDrawn) {
+			if (!C.timefreq.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
 				if (!axesAreDrawn) {
@@ -427,7 +427,7 @@ let initTimefreqView = () => {
 					F.timefreq.baseTime = new Date().getTime()
 					lastTime = F.timefreq.baseTime
 				}
-			} else if (C.gridToggle && !gridIsDrawn) {
+			} else if (C.timefreq.gridToggle && !gridIsDrawn) {
 				drawGrid('timefreq', ctx3, width, height, 16, 12)
 				gridIsDrawn = true
 				if (!axesAreDrawn) {
@@ -452,7 +452,7 @@ let initTimefreqView = () => {
 			let thickness = width * (newTime - lastTime) / radarMS * (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100)
 			
 			// Just analyse a proportion of all frequencies (lowest picthes)
-			let rangeProportion = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 0.3 : (C.scale.y == 2 ? 0.1 : 1))
+			let rangeProportion = C.timefreq.scale.y == 0 ? 1 : (C.timefreq.scale.y == 1 ? 0.3 : 0.1)
 			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -527,7 +527,7 @@ let initCombinedView = () => {
 	ctx3.font = '13px Raleway'
 	
 	let gridIsDrawn = false
-	let lastYscale = C.scale.y
+	let lastYscale = C.combined.scale.y
 	
 	// Radial radar time loop
 	F.combined.baseTime = new Date().getTime()
@@ -548,18 +548,18 @@ let initCombinedView = () => {
 			frame1++
 			
 			// If scale has changed, clear curve grid (and thus scales)
-			if (lastYscale != C.scale.y) {
+			if (lastYscale != C.combined.scale.y) {
 				ctx1.clearRect(0, 0, width1, height1)
 				ctx3.clearRect(0, 0, width1, height1)
 				gridIsDrawn = false
-				lastYscale = C.scale.y
+				lastYscale = C.combined.scale.y
 			}
 			
 			// Maybe clear or draw grid
-			if (!C.gridToggle && gridIsDrawn) {
+			if (!C.combined.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width1, height1)
 				gridIsDrawn = false
-			} else if (C.gridToggle && !gridIsDrawn) {
+			} else if (C.combined.gridToggle && !gridIsDrawn) {
 				drawGrid('combined', ctx3, width1, height1)
 				gridIsDrawn = true
 			}
@@ -574,7 +574,7 @@ let initCombinedView = () => {
 			let thetaRange = 2 * Math.PI * (newTime - lastTime) / radarMS
 			
 			// Just analyse a proportion of all frequencies (lowest picthes)
-			let rangeProportion = C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 0.3 : (C.scale.y == 2 ? 0.1 : 1))
+			let rangeProportion = C.combined.scale.y == 0 ? 1 : (C.combined.scale.y == 1 ? 0.3 : 0.1)
 			
 			for (let s = 0; s < sections; s++) {
 				let sectionSampleIndex = Math.floor(F.frequDataArray.length * rangeProportion / sections * s)
@@ -783,7 +783,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 			let x = 10/100 * width + v * vStep
 			ctx.textAlign = 'center'
 			let text = 0 - 40 * (vertiCuts - v) / vertiCuts// unzoomed graph spans 40ms
-			text *= C.scale.x == 0 ? 1 : (C.scale.x == 1 ? 1/2 : (C.scale.x == 2 ? 1/10 : (1)))
+			text *= C.oscilloscope.scale.x == 0 ? 1 : (C.oscilloscope.scale.x == 1 ? 1/2 : 1/10)
 			ctx.fillText(text, x, 93.5/100 * height)
 		}
 		// Vertical scales
@@ -792,7 +792,7 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 			let y = 10.8/100 * height + h * hStep
 			ctx.textAlign = 'right'
 			let text = Math.abs(Math.round(100 * (horiCuts - 2*h) / horiCuts))
-			text *= C.scale.y == 0 ? 1 : (C.scale.y == 1 ? 1/2 : (C.scale.y == 2 ? 1/10 : (1)))
+			text *= C.oscilloscope.scale.y == 0 ? 1 : (C.oscilloscope.scale.y == 1 ? 1/2 : 1/10)
 			ctx.fillText(text, 9/100 * width, y)
 		}
 	} else if (type == 'fft') {
@@ -816,12 +816,12 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		for (let h = 0; h <= horiCuts; h++) {
 			let y = 91.0/100 * height - h * hStep
 			ctx.textAlign = 'right'
-			let step = h / horiCuts * (C.scale.y == 0 ? 24 : (C.scale.y == 1 ? 24/3 : (C.scale.y == 2 ? 24/10 : 24)))
+			let step = h / horiCuts * (C.timefreq.scale.y == 0 ? 24 : (C.timefreq.scale.y == 1 ? 24/3 : 24/10))
 			ctx.fillText(Math.round(10 * step) / 10, 9/100 * width, y)
 		}
 	} else if (type == 'combined') {
 		// Radial scales (one per circle)
-		let rMin = 100, rMax = 600, iMax = 12, maxFreq = C.scale.y == 0 ? 24 : (C.scale.y == 1 ? 24/3 : (C.scale.y == 2 ? 24/10 : 24))
+		let rMin = 100, rMax = 600, iMax = 12, maxFreq = C.combined.scale.y == 0 ? 24 : (C.combined.scale.y == 1 ? 24/3 : 24/10)
 		for (let i = 0; i <= iMax; i++) {
 			let r = rMin + i / iMax * (rMax - rMin)
 			let freq = 0 + i / iMax * maxFreq

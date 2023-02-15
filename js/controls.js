@@ -2,63 +2,113 @@
  * Controls script file for FOPTI project
  *
  * @author Alex Andrix
- * @date 2022
+ * @date 2022-2023
  */
 
 let C = {
-	axisToggle: false,
-	gridToggle: false,
-	precisionToggle: false,
-	scale: {
-		x: 0,// 0, 1 or 2
-		y: 0// 0, 1 or 2
+	oscilloscope: {
+		controlsNode: document.querySelector('#oscilloscope-container .controls'),
+		axisToggle: false,
+		gridToggle: false,
+		precisionToggle: false,
+		scale: {
+			x: 0,// 0, 1 or 2
+			y: 0// 0, 1 or 2
+		}
+	},
+	fft: {
+		controlsNode: document.querySelector('#fft-container .controls'),
+		axisToggle: false,
+		gridToggle: false,
+		precisionToggle: false,
+		scale: {
+			x: 0,
+			y: 0
+		}
+	},
+	timefreq: {
+		controlsNode: document.querySelector('#timefreq-container .controls'),
+		axisToggle: false,
+		gridToggle: false,
+		precisionToggle: false,
+		scale: {
+			x: 0,
+			y: 0
+		}
+	},
+	combined: {
+		controlsNode: document.querySelector('#combined-container .controls'),
+		axisToggle: false,
+		gridToggle: false,
+		precisionToggle: false,
+		scale: {
+			x: 0,
+			y: 0
+		}
 	}
 }
 
+let getCview = () => {
+	let obj
+	
+	if (F.activeView == 'oscilloscope') obj = C.oscilloscope
+	else if (F.activeView == 'fft') obj = C.fft
+	else if (F.activeView == 'timefreq') obj = C.timefreq
+	else if (F.activeView == 'combined') obj = C.combined
+	// Not checking for 'About' view
+	
+	return obj
+}
 let toggle = (keycode) => {
+	let obj = getCview()
+	if (!obj) return false
+	
 	// 'A' key
 	if (keycode == 65) {
 		// Toggle global control variable
-		C.axisToggle = !C.axisToggle
+		obj.axisToggle = !obj.axisToggle
 	}
 	// 'G' key
 	if (keycode == 71) {
 		// Toggle global control variable
-		C.gridToggle = !C.gridToggle
+		obj.gridToggle = !obj.gridToggle
 	}
 	// 'P' key
 	if (keycode == 80) {
 		// Toggle global control variable
-		C.precisionToggle = !C.precisionToggle
+		obj.precisionToggle = !obj.precisionToggle
 	}
 	// Arrow keys
 	if (keycode == 37) {// Left arrow
-		C.scale.x--
+		obj.scale.x--
 	} else if (keycode == 38) {// Up arrow
-		C.scale.y++
+		obj.scale.y++
 	} else if (keycode == 39) {// Right arrow
-		C.scale.x++
+		obj.scale.x++
 	} else if (keycode == 40) {// Down arrow
-		C.scale.y--
+		obj.scale.y--
 	}
-	C.scale.x = Math.min(2, Math.max(0, C.scale.x))
-	C.scale.y = Math.min(2, Math.max(0, C.scale.y))
+	obj.scale.x = Math.min(2, Math.max(0, obj.scale.x))
+	obj.scale.y = Math.min(2, Math.max(0, obj.scale.y))
 }
 
 // Used for A, G and P keys
 let updateControlsView = () => {
+	let obj = getCview()
+	if (!obj) return false
+	
 	// Remove all .active classes
-	Array.from(document.getElementsByClassName('control-tab')).forEach((el) => {
+	Array.from(obj.controlsNode.querySelectorAll('.control-tab')).forEach((el) => {
 		el.classList.remove('active')
 	})
 	
 	// Add .active on all active tabs
-	Array.from(document.getElementsByClassName('key-icon')).forEach((el) => {
+	Array.from(obj.controlsNode.querySelectorAll('.key-icon')).forEach((el) => {
 		let keycode = el.getAttribute('data-keycode')
 		if (
-			C.axisToggle && keycode == 65 ||
-			C.gridToggle && keycode == 71 ||
-			C.precisionToggle && keycode == 80
+			obj.axisToggle && keycode == 65 ||
+			obj.gridToggle && keycode == 71 ||
+			obj.precisionToggle && keycode == 80
 		) {
 			el.parentNode.classList.add('active')
 		}
