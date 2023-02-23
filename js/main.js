@@ -6,6 +6,7 @@
  */
 
 let myVerySpecialInputScaling = 0.95
+let highContrastMode = false
 
 // Global variables in F namespace
 let F = {
@@ -26,10 +27,12 @@ let F = {
 		combined: false
 	},
 	oscilloscope: {
-		lineColor: 'hsla(140, 100%, 60%, 1)'
+		lineColor: highContrastMode ? 'white' : 'hsla(140, 100%, 60%, 1)',
+		lineWidth: highContrastMode ? 2.5 : 1
 	},
 	fft: {
-		lineColor: 'hsla(0, 100%, 55%, 1)'
+		lineColor: highContrastMode ? 'white' : 'hsla(0, 100%, 55%, 1)',
+		lineWidth: highContrastMode ? 2.5 : 1
 	},
 	timefreq: {
 		baseTime: undefined
@@ -157,6 +160,7 @@ let configureCanvas = (ctx, width, height) => {
 	ctx.canvas.style.height = height + "px"
 	ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
 	ctx.lineWidth = 1
+	ctx.lineCap = "round"
 }
 
 let initOscilloscopeView = () => {
@@ -172,6 +176,7 @@ let initOscilloscopeView = () => {
 	// Canvas configurations
 	configureCanvas(ctx1, width, height)
 	ctx1.strokeStyle = F.oscilloscope.lineColor
+	ctx1.lineWidth = F.oscilloscope.lineWidth
 	
 	configureCanvas(ctx2, width, height)
 	ctx2.strokeStyle = F.grids.axesColor
@@ -278,6 +283,7 @@ let initFFTView = () => {
 	// Canvas configuration
 	configureCanvas(ctx1, width, height)
 	ctx1.strokeStyle = F.fft.lineColor
+	ctx1.lineWidth = F.fft.lineWidth
 	
 	configureCanvas(ctx2, width, height)
 	ctx2.strokeStyle = F.grids.axesColor
@@ -471,14 +477,15 @@ let initTimefreqView = () => {
 				
 				// Colors
 				let hue = 260 - maxSampleValue / 255 * 60
-				let lum = 0.4 + 0.6 * maxSampleValue / 255 * 100
+				let sat = highContrastMode ? 0 : 80
+				let lum = 60 * maxSampleValue / 255 + (highContrastMode ? 45 : 0) // Overflowing 100 a bit
 				let alpha = maxSampleValue / 255 * 2.0
 				
 				// Clear previous
 				ctx1.clearRect(X, y - zoneHeight, thickness + 1, zoneHeight)
 				
 				// Fill!
-				ctx1.fillStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+				ctx1.fillStyle = 'hsla(' + hue + ', ' + sat + '%, ' + lum + '%, ' + alpha + ')'
 				ctx1.beginPath()
 				let maxWidth = width * (axesAreDrawn || gridIsDrawn ? 90/100 : 100/100)
 				if (X + thickness < maxWidth) ctx1.fillRect(X, y - zoneHeight, thickness, zoneHeight)
@@ -517,6 +524,7 @@ let initCombinedView = () => {
 	ctx1.fillStyle = 'black'
 	ctx1.strokeStyle = 'white'
 	ctx1.fillRect(0, 0, width1, height1)
+	ctx1.lineCap = "butt"
 	
 	// Tiny oscilloscope
 	configureCanvas(ctx2, width2, height2)
@@ -591,12 +599,13 @@ let initCombinedView = () => {
 				
 				// Colors				
 				let hue = 260 - maxSampleValue / 255 * 60
-				let lum = 0.4 + 0.6 * maxSampleValue / 255 * 100
+				let sat = highContrastMode ? 0 : 80
+				let lum = 60 * maxSampleValue / 255 + (highContrastMode ? 45 : 0) // Overflowing 100 a bit
 				let alpha = maxSampleValue / 255 * 2.0
 				
 				// Draw new arc
 				ctx1.beginPath()
-				ctx1.strokeStyle = 'hsla(' + hue + ', 80%, ' + lum + '%, ' + alpha + ')'
+				ctx1.strokeStyle = 'hsla(' + hue + ', ' + sat + '%, ' + lum + '%, ' + alpha + ')'
 				ctx1.lineWidth = zoneHeight
 				ctx1.arc(centerX, centerY, r + zoneHeight / 2, lastTheta, theta, false)
 				ctx1.stroke()
@@ -842,7 +851,7 @@ let startAudio = () => {
 	// Create oscillator source node
 	F.osci = new OscillatorNode(F.audioContext, {
 		frequency: 440,
-		type: "triangle" // "sine", "square", "sawtooth", "triangle"
+		type: "square" // "sine", "square", "sawtooth", "triangle"
 	})
 	
 	// Create gain node
@@ -856,7 +865,7 @@ let startAudio = () => {
 	F.frequDataArray = new Uint8Array(bufferLength)
 	
 	// Calibrate reactivity (more or less averaged with previous value), 0.8 is default, 0 is not averaged and thus super reactive, and 1 the maximum
-	F.analyser.smoothingTimeConstant = 0.2
+	F.analyser.smoothingTimeConstant = 0.1
 	
 	F.analyser.minDecibels = -100
 	F.analyser.maxDecibels = 0
