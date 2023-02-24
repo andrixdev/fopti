@@ -14,6 +14,12 @@ let C = {
 		scale: {
 			x: 0,// 0, 1 or 2
 			y: 0// 0, 1 or 2
+		},
+		arrows: {
+			leftPressed: false,
+			upPressed: false,
+			rightPressed: false,
+			downPressed: false
 		}
 	},
 	fft: {
@@ -24,6 +30,10 @@ let C = {
 		scale: {
 			x: 0,
 			y: 0
+		},
+		arrows: {
+			leftPressed: false,
+			rightPressed: false
 		}
 	},
 	timefreq: {
@@ -34,6 +44,10 @@ let C = {
 		scale: {
 			x: 0,
 			y: 0
+		},
+		arrows: {
+			upPressed: false,
+			downPressed: false
 		}
 	},
 	combined: {
@@ -44,10 +58,13 @@ let C = {
 		scale: {
 			x: 0,
 			y: 0
+		},
+		arrows: {
+			upPressed: false,
+			downPressed: false
 		}
 	}
 }
-
 let getCview = () => {
 	let obj
 	
@@ -59,52 +76,63 @@ let getCview = () => {
 	
 	return obj
 }
-let toggle = (keycode) => {
+let updateCmodel = (keycode, type) => {
+	// type can be either 'keyup' or 'keydown'
+	
 	let obj = getCview()
 	if (!obj) return false
 	
 	// 'A' key
-	if (keycode == 65) {
-		// Toggle global control variable
+	if (keycode == 65 && type == 'keyup') {
 		obj.axisToggle = !obj.axisToggle
 	}
 	// 'G' key
-	if (keycode == 71) {
-		// Toggle global control variable
+	if (keycode == 71 && type == 'keyup') {
 		obj.gridToggle = !obj.gridToggle
 	}
 	// 'P' key
-	if (keycode == 80) {
+	if (keycode == 80 && type == 'keyup') {
 		// Toggle global control variable
 		obj.precisionToggle = !obj.precisionToggle
 	}
 	// Arrow keys
-	if (keycode == 37) {// Left arrow
+	if (keycode == 37 && type == 'keyup') {// Left arrow
 		obj.scale.x--
-	} else if (keycode == 38) {// Up arrow
+	} else if (keycode == 38 && type == 'keyup') {// Up arrow
 		obj.scale.y++
-	} else if (keycode == 39) {// Right arrow
+	} else if (keycode == 39 && type == 'keyup') {// Right arrow
 		obj.scale.x++
-	} else if (keycode == 40) {// Down arrow
+	} else if (keycode == 40 && type == 'keyup') {// Down arrow
 		obj.scale.y--
 	}
 	obj.scale.x = Math.min(2, Math.max(0, obj.scale.x))
 	obj.scale.y = Math.min(2, Math.max(0, obj.scale.y))
+	
+	// Arrow pressed states
+	if (keycode == 37 && !!type && obj.arrows.leftPressed != null) { obj.arrows.leftPressed = type == 'keydown' ? true : false }
+	if (keycode == 38 && !!type && obj.arrows.upPressed != null) { obj.arrows.upPressed = type == 'keydown' ? true : false }
+	if (keycode == 39 && !!type && obj.arrows.rightPressed != null) { obj.arrows.rightPressed = type == 'keydown' ? true : false }
+	if (keycode == 40 && !!type && obj.arrows.downPressed != null) { obj.arrows.downPressed = type == 'keydown' ? true : false }
 }
-
-// Used for A, G and P keys
-let updateControlsView = () => {
+let updateCview = () => {
 	let obj = getCview()
 	if (!obj) return false
 	
 	// Remove all .active classes
 	Array.from(obj.controlsNode.querySelectorAll('.control-tab')).forEach((el) => {
 		el.classList.remove('active')
+		// For arrows (.active class is on the key icon and not on the controls tab)
+		Array.from(obj.controlsNode.querySelectorAll('.key-icon')).forEach((elt) => {
+			elt.classList.remove('active')
+		})
+		obj.controlsNode.querySelector('.key-info').classList.remove('active')
 	})
 	
-	// Add .active on all active tabs
+	// Add .active on all active control tabs or subdivs (.key-icon and .key-info)
 	Array.from(obj.controlsNode.querySelectorAll('.key-icon')).forEach((el) => {
 		let keycode = el.getAttribute('data-keycode')
+		
+		// 'A', 'G' and 'P'
 		if (
 			obj.axisToggle && keycode == 65 ||
 			obj.gridToggle && keycode == 71 ||
@@ -112,55 +140,46 @@ let updateControlsView = () => {
 		) {
 			el.parentNode.classList.add('active')
 		}
+		
+		// Arrows
+		if (obj.arrows.leftPressed && keycode == 37) {
+			el.classList.add('active')
+			el.parentNode.querySelector(".key-info").classList.add('active')
+		}
+		if (obj.arrows.upPressed && keycode == 38) {
+			el.classList.add('active')
+			el.parentNode.querySelector(".key-info").classList.add('active')
+		}
+		if (obj.arrows.rightPressed && keycode == 39) {
+			el.classList.add('active')
+			el.parentNode.querySelector(".key-info").classList.add('active')
+			
+		}
+		if (obj.arrows.downPressed && keycode == 40) {
+			el.classList.add('active')
+			el.parentNode.querySelector(".key-info").classList.add('active')
+		}
 	})
 }
 
 document.addEventListener("DOMContentLoaded", (ev) => {
 	
-	// Key control
-	document.addEventListener("keyup", (event) => {
-		toggle(event.keyCode)
-		updateControlsView()
-	})
-	
 	// Click/tap control
 	Array.from(document.getElementsByClassName('key-icon')).forEach((el) => {
 		el.addEventListener('click', (ev) => {
 			let keycode = ev.target.getAttribute('data-keycode')
-			toggle(keycode)
-			updateControlsView()
+			updateCmodel(keycode, 'keyup')
+			updateCview()
 		})
 	})
 	
-	// Special case for arrows because they don't remain pressed (more than 2 states)
+	// Key control
 	document.addEventListener("keydown", (event) => {
-		if (event.keyCode == 37) {
-			document.querySelector(".arrows-control-tab .key-info").classList.add('active')
-			document.querySelector(".key-icon[data-keycode='37']").classList.add('active')
-		} else if (event.keyCode == 38) {
-			document.querySelector(".arrows-control-tab .key-info").classList.add('active')
-			document.querySelector(".key-icon[data-keycode='38']").classList.add('active')
-		} else if (event.keyCode == 39) {
-			document.querySelector(".arrows-control-tab .key-info").classList.add('active')
-			document.querySelector(".key-icon[data-keycode='39']").classList.add('active')
-		} else if (event.keyCode == 40) {
-			document.querySelector(".arrows-control-tab .key-info").classList.add('active')
-			document.querySelector(".key-icon[data-keycode='40']").classList.add('active')
-		}
+		updateCmodel(event.keyCode, 'keydown')
+		updateCview()
 	})
 	document.addEventListener("keyup", (event) => {
-		if (event.keyCode == 37) {
-			document.querySelector(".arrows-control-tab .key-info").classList.remove('active')
-			document.querySelector(".key-icon[data-keycode='37']").classList.remove('active')
-		} else if (event.keyCode == 38) {
-			document.querySelector(".arrows-control-tab .key-info").classList.remove('active')
-			document.querySelector(".key-icon[data-keycode='38']").classList.remove('active')
-		} else if (event.keyCode == 39) {
-			document.querySelector(".arrows-control-tab .key-info").classList.remove('active')
-			document.querySelector(".key-icon[data-keycode='39']").classList.remove('active')
-		} else if (event.keyCode == 40) {
-			document.querySelector(".arrows-control-tab .key-info").classList.remove('active')
-			document.querySelector(".key-icon[data-keycode='40']").classList.remove('active')
-		}
+		updateCmodel(event.keyCode, 'keyup')
+		updateCview()
 	})
 })

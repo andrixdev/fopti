@@ -235,15 +235,14 @@ let initOscilloscopeView = () => {
 			}
 			
 			// Draw curve
-			ctx1.beginPath()
 			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.timuDataArray.length
-			
 			let timeData = F.timuDataArray // Full 2048 array
 			// Chop down array if we have zoomed scale to keep just the first values (most recent milliseconds of signal)
 			let chopFactor = C.oscilloscope.scale.x == 0 ? 1 : (C.oscilloscope.scale.x == 1 ? 2 : 10)
 			let yScale = C.oscilloscope.scale.y == 0 ? 1 : (C.oscilloscope.scale.y == 1 ? 2 : 10)
 			timeData = timeData.slice(0, timeData.length / chopFactor)
 			let increment = C.oscilloscope.precisionToggle ? 1 : Math.floor(timeData.length / 200) // Draw all values or just 200 values
+			ctx1.beginPath()
 			for (let i = 0; i < timeData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let yCore = height - height * timeData[i] / 255
@@ -298,6 +297,7 @@ let initFFTView = () => {
 	
 	let axesAreDrawn = false
 	let gridIsDrawn = false
+	let lastXscale = C.fft.scale.x
 	
 	// Canvas time loop
 	let frame = 0
@@ -320,22 +320,34 @@ let initFFTView = () => {
 			}
 			
 			// Maybe clear or draw grid
+			let gridVertiCuts = C.fft.scale.x == 0 ? 24 : (C.fft.scale.x == 1 ? 8 : 4)
 			if (!C.fft.gridToggle && gridIsDrawn) {
 				ctx3.clearRect(0, 0, width, height)
 				gridIsDrawn = false
 			} else if (C.fft.gridToggle && !gridIsDrawn) {
-				drawGrid('fft', ctx3, width, height, 24, 10)
+				drawGrid('fft', ctx3, width, height, gridVertiCuts, 10)
 				gridIsDrawn = true
 			}
 			
+			// If scale has changed, redraw grid (and thus scales)
+			if (C.fft.gridToggle && (lastXscale != C.fft.scale.x)) {
+				ctx3.clearRect(0, 0, width, height)
+				drawGrid('fft', ctx3, width, height, gridVertiCuts, 10)
+				lastXscale = C.fft.scale.x
+			}
+			
 			// Draw curve
-			ctx1.beginPath()
 			let step = (axesAreDrawn || gridIsDrawn ? 80/100 : 100/100) * width / F.frequDataArray.length
-			let increment = C.fft.precisionToggle ? 1 : 5 // There are 2048 values to draw. We draw only 1/5 of them unless precision+ mode is active
-			for (let i = 0; i < F.frequDataArray.length; i += increment) {
-				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step
+			let freqData = F.frequDataArray
+			// Chop down array if we have zoomed X scale to keep just the first kHz
+			let chopFactor = C.fft.scale.x == 0 ? 1 : (C.fft.scale.x == 1 ? 3 : 10)
+			freqData = freqData.slice(0, freqData.length / chopFactor)
+			let increment = C.fft.precisionToggle ? 1 : Math.floor(freqData.length / 200) // Draw all values or just 200 values
+			ctx1.beginPath()
+			for (let i = 0; i < freqData.length; i += increment) {
+				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let y = (axesAreDrawn || gridIsDrawn) ?
-				(90/100 * height - 80/100 * height * F.frequDataArray[i] / 255) : (height - height * F.frequDataArray[i] / 255)
+				(90/100 * height - 80/100 * height * freqData[i] / 255) : (height - height * freqData[i] / 255)
 				
 				if (i == 0) {
 					ctx1.moveTo(x, y)
@@ -813,7 +825,8 @@ let drawGrid = (type, ctx, width, height, vertiCuts, horiCuts) => {
 		for (let v = 0; v <= vertiCuts; v++) {
 			let x = 10/100 * width + v * vStep
 			ctx.textAlign = 'center'
-			ctx.fillText(v, x, 93.5/100 * height)
+			let step = v / vertiCuts * (C.fft.scale.x == 0 ? 24 : (C.fft.scale.x == 1 ? 24/3 : 24/10))
+			ctx.fillText(Math.round(10 * step) / 10, x, 93.5/100 * height)
 		}
 		// Vertical scales
 		let hStep = 1 / horiCuts * 80/100 * height

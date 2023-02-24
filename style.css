@@ -198,7 +198,18 @@ main section.template {
 	margin-left: 63px;
 }
 
-/* Arrow control overrides for Timefreq because we just have up and down arrow */
+/* Arrow control overrides */
+#fft-container .arrows-control-tab .key-icon[data-keycode="37"] {/* Left */
+	top: calc(50% - 11px);
+	left: calc(50% - 11px - 37px);
+}
+#fft-container .arrows-control-tab .key-icon[data-keycode="39"] {/* Right */
+	top: calc(50% - 11px);
+	left: calc(50% - 11px + 39px);
+}
+#fft-container .arrows-control-tab .key-info {
+	margin-left: 0px;
+}
 #timefreq-container .arrows-control-tab .key-icon[data-keycode="38"],
 #combined-container .arrows-control-tab .key-icon[data-keycode="38"] {/* Up */
 	left: calc(50% - 11px);
@@ -214,13 +225,6 @@ main section.template {
 #timefreq-container .arrows-control-tab .key-info,
 #combined-container .arrows-control-tab .key-info {
 	margin-left: 0;
-}
-#timefreq-container .control-tab.active .key-info,
-#timefreq-container .control-tab .key-info.active,
-#combined-container .control-tab.active .key-info,
-#combined-container .control-tab .key-info.active {
-	opacity: .75;
-	text-shadow: none;
 }
 
 /* Specific */
