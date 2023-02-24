@@ -246,12 +246,12 @@ let initOscilloscopeView = () => {
 			for (let i = 0; i < timeData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
 				let yCore = height - height * timeData[i] / 255
-				let yGridScale = axesAreDrawn || gridIsDrawn ? 80/100 : 90/100
-				let y = height / 2 + yGridScale * yScale * myVerySpecialInputScaling * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
+				let ySpan = axesAreDrawn || gridIsDrawn ? 80/100 : 90/100 // %
+				let y = height / 2 + ySpan * yScale * myVerySpecialInputScaling * (yCore - height / 2) // Signal can range up to max 53% or 90% of canvas height
 				
-				// Cap
-				y = Math.min(y, height / 2 + height * yGridScale / 2)
-				y = Math.max(y, height / 2 - height * yGridScale / 2)
+				// Clamp
+				y = Math.min(y, height / 2 + height * ySpan / 2)
+				y = Math.max(y, height / 2 - height * ySpan / 2)
 				
 				if (i == 0) {
 					ctx1.moveTo(x, y)
@@ -346,8 +346,15 @@ let initFFTView = () => {
 			ctx1.beginPath()
 			for (let i = 0; i < freqData.length; i += increment) {
 				let x = (axesAreDrawn || gridIsDrawn ? 10/100 * width : 0) + i * step * chopFactor
-				let y = (axesAreDrawn || gridIsDrawn) ?
-				(90/100 * height - 80/100 * height * freqData[i] / 255) : (height - height * freqData[i] / 255)
+				let yBase = axesAreDrawn || gridIsDrawn ? 90/100 : 100/100 // %
+				let ySpan = axesAreDrawn || gridIsDrawn ? 80/100 : 100/100 // %
+				let extraInput = Math.log10(myVerySpecialInputScaling) * 20 / 100 // dB
+				if (freqData[i] == 0) extraInput = 0 // Do that otherwise the -100dB baseline gets lifted too
+				let y = yBase * height - ySpan * (freqData[i] / 255 + extraInput) * height
+				
+				// Clamp
+				y = Math.min(y, height / 2 + height * ySpan / 2)
+				y = Math.max(y, height / 2 - height * ySpan / 2)
 				
 				if (i == 0) {
 					ctx1.moveTo(x, y)
@@ -488,6 +495,12 @@ let initTimefreqView = () => {
 				let y = axesAreDrawn || gridIsDrawn ? 10/100 * height + 80/100 * yCore : yCore
 				
 				// Colors
+				if (maxSampleValue != 0) {
+					// Add extra input
+					maxSampleValue += Math.log10(myVerySpecialInputScaling) * 20 * 255/100 // dB
+					// Clamp
+					maxSampleValue = Math.max(0, Math.min(255, maxSampleValue))
+				}
 				let hue = 260 - maxSampleValue / 255 * 60
 				let sat = highContrastMode ? 0 : 80
 				let lum = 60 * maxSampleValue / 255 + (highContrastMode ? 45 : 0) // Overflowing 100 a bit
@@ -609,7 +622,13 @@ let initCombinedView = () => {
 				
 				let r = baseRadius + (maxRadius - baseRadius) * s / sections
 				
-				// Colors				
+				// Colors
+				if (maxSampleValue != 0) {
+					// Add extra input
+					maxSampleValue += Math.log10(myVerySpecialInputScaling) * 20 * 255/100 // dB
+					// Clamp
+					maxSampleValue = Math.max(0, Math.min(255, maxSampleValue))
+				}				
 				let hue = 260 - maxSampleValue / 255 * 60
 				let sat = highContrastMode ? 0 : 80
 				let lum = 60 * maxSampleValue / 255 + (highContrastMode ? 45 : 0) // Overflowing 100 a bit
