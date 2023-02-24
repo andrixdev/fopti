@@ -17,11 +17,6 @@ If you wish to amplify or diminish input signal on your personal implementation 
 
 You can also enable a high contrast black & white mode by setting the *highContrastMode* variable to *true* at line 9.
 
-## Features to finish this week
-- horizontal zoom controls for FFT
-- propagate myVerySpecialInputScaling on FFT, Timefreq and Combined
-- add sound warning for oscillator
-
 ## Future evolutions
 - Flow mode on Timefreq view instead of radar
 - Export recorded data with a Save button

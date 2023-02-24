@@ -82,6 +82,15 @@ nav #audio-buttons button.hidden {
 nav #audio-buttons button.audio-start {
 	width: 100%;
 }
+nav p#unmute-warning {
+	padding: 1rem;
+	text-align: center;
+	text-shadow: red 0 0 3px;
+	color: red;
+}
+nav p#unmute-warning.hidden {
+	display: none;
+}
 
 section.template {
 	display: none;

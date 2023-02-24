@@ -62,7 +62,8 @@ const dom = {
 		oscillatorStart: document.getElementsByClassName('oscillator-start')[0],
 		oscillatorStop: document.getElementsByClassName('oscillator-stop')[0],
 		audioMute: document.getElementsByClassName('audio-mute')[0],
-		audioUnmute: document.getElementsByClassName('audio-unmute')[0]
+		audioUnmute: document.getElementsByClassName('audio-unmute')[0],
+		warning: document.getElementById('unmute-warning')
 	},
 	templates: {
 		home: document.getElementById('home-template'),
@@ -925,7 +926,7 @@ let startAudio = () => {
 	
 }
 let startOscillator = () => {
-	F.gain.gain.value = 1
+	F.gain.gain.value = 0
 	
 	// Link oscillator to audio context destination (for hearing) with a gain node inbetween them
 	F.osci.connect(F.gain)
@@ -1006,8 +1007,10 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		
 		startOscillator()
 		
-		// Show mute button
-		dom.buttons.audioMute.classList.remove('hidden')
+		// Show unmute button
+		dom.buttons.audioUnmute.classList.remove('hidden')
+		
+		dom.buttons.warning.classList.remove('hidden')
 	})
 	/*
 	dom.buttons.mikeStop.addEventListener('click', () => {
@@ -1041,6 +1044,8 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		// Toggle mute/unmute .hidden status
 		dom.buttons.audioMute.classList.add('hidden')
 		dom.buttons.audioUnmute.classList.remove('hidden')
+		
+		dom.buttons.warning.classList.remove('hidden')
 	})
 	dom.buttons.audioUnmute.addEventListener('click', () => {
 		F.gain.gain.value = 1
@@ -1048,6 +1053,14 @@ document.addEventListener("DOMContentLoaded", (ev) => {
 		// Toggle mute/unmute .hidden status
 		dom.buttons.audioUnmute.classList.add('hidden')
 		dom.buttons.audioMute.classList.remove('hidden')
+		
+		dom.buttons.warning.classList.add('hidden')
+	})
+	dom.buttons.audioUnmute.addEventListener('pointerenter', () => {
+		dom.buttons.warning.classList.remove('hidden')
+	})
+	dom.buttons.audioUnmute.addEventListener('pointerout', () => {
+		dom.buttons.warning.classList.add('hidden')
 	})
 	
 	initNavAndViewMechanics()
