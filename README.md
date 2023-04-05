@@ -7,7 +7,7 @@ Enhanced Michelson interferometer for a sensory understanding of gravitational w
 This project is funded by the Le [Réseau Optique et Photonique du CNRS](https://rop.cnrs.fr/)
 
 ## Hosting
-The projet is hosted at https://alexandrix.com/fopti
+The project is hosted at https://alexandrix.com/fopti
 
 ## Installation
 Just download the code ZIP file and open index.html in your favorite browser, preferably Firefox or Chrome.
